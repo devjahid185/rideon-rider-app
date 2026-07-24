@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+	<!-- ✅ Google API Key (used by Firebase / Google Maps SDK) -->
+	<key>API_KEY</key>
+	<string>AIzaSyBA7FtIF-fgSArvcdu2Y2oVsPHydFGVHHI</string>
+
+	<!-- ✅ Improves rendering performance on iPhones -->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+
+	<!-- ✅ App language/region settings -->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+
+	<!-- ✅ App display name on home screen -->
+	<key>CFBundleDisplayName</key>
+	<string>WGN Move Rider</string>
+
+	<!-- ✅ Executable file -->
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+
+	<!-- ✅ Bundle identifier (unique app ID) -->
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+	<!-- ✅ Info.plist version -->
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+
+	<!-- ✅ App name -->
+	<key>CFBundleName</key>
+	<string>WGN Move Rider</string>
+
+	<!-- ✅ App type (always APPL for iOS apps) -->
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+
+	<!-- ✅ App version (e.g. 1.0.0) -->
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+
+	<!-- ✅ Signature (???? is default placeholder) -->
+	<key>CFBundleSignature</key>
+	<string>????</string>
+
+	<!-- ✅ URL Schemes (used for Google Sign-In / OAuth) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.688750971224-fuv3o15s1h61p0d9ajrgvg177k07nd0j</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- ✅ Build number (internal version code) -->
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+
+	<!-- ✅ Google Maps API Key (must be set correctly) -->
+	<key>GMSApiKey</key>
+	<string>Add_google_api_key_here</string>
+
+	<!-- ✅ Firebase App ID -->
+	<key>GOOGLE_APP_ID</key>
+	<string>1:688750971224:ios:e03329c7238a5f978bfd2d</string>
+
+	<!-- ✅ Required for all iOS apps -->
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+
+	<!-- ✅ Permissions (iOS Privacy settings) -->
+	<key>NSCameraUsageDescription</key>
+	<string>WGN Move Rider needs access to your camera to capture and upload pictures of your ID for booking verification or to take photos of items and update your profile.</string>
+
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>WGN Move Rider uses your location to find nearby items and deals when you're actively using the app. Additionally, we may update available properties and offers in your vicinity even when the app is running in the background to provide you with the best deals.</string>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>WGN Move Rider needs access to your location to provide relevant property options and deals while you're using the app.</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>WGN Move Rider requires access to your photo library to upload pictures of your ID or other documents for booking verification, or to add profile and property images.</string>
+
+	<!-- ✅ Allows external keyboards / input -->
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+
+	<!-- ✅ Background services -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>location</string>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- ✅ Launch screen storyboard -->
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+
+	<!-- ✅ Main storyboard (not used in Flutter, but required by iOS) -->
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+
+	<!-- ✅ Supported orientations (iPhone) -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<!-- ✅ Supported orientations (iPad) -->
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+</dict>
+</plist>
