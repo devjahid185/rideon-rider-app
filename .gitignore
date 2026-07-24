@@ -48,8 +48,10 @@ app.*.map.json
 /android/local.properties
 /ios/Pods/
 /ios/.symlinks/
+/ios/build/
 /ios/Flutter/Flutter.framework
 /ios/Flutter/Flutter.podspec
+/macos/Pods/
 *.jks
 *.keystore
 key.properties
