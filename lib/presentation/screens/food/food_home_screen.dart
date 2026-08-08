@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:ride_on/core/services/config.dart';
@@ -46,8 +46,12 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   }
 
   Future<void> _initializeAndLoadRestaurants({bool forceGps = false}) async {
-    final cachedLat = double.tryParse((box.get('last_latitude') ?? '').toString());
-    final cachedLng = double.tryParse((box.get('last_longitude') ?? '').toString());
+    final cachedLat = double.tryParse(
+      (box.get('last_latitude') ?? '').toString(),
+    );
+    final cachedLng = double.tryParse(
+      (box.get('last_longitude') ?? '').toString(),
+    );
     if (!forceGps &&
         cachedLat != null &&
         cachedLng != null &&
@@ -59,11 +63,10 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         'lat=$cachedLat lng=$cachedLng',
       );
       context.read<FoodCubit>().loadNearbyRestaurants(
-            latitude: cachedLat,
-            longitude: cachedLng,
-            radiusKm: 30,
-            limit: 50,
-          );
+        latitude: cachedLat,
+        longitude: cachedLng,
+        radiusKm: 30,
+      );
       return;
     }
 
@@ -100,11 +103,10 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
       box.put('last_latitude', position.latitude);
       box.put('last_longitude', position.longitude);
       context.read<FoodCubit>().loadNearbyRestaurants(
-            latitude: position.latitude,
-            longitude: position.longitude,
-            radiusKm: 30,
-            limit: 50,
-          );
+        latitude: position.latitude,
+        longitude: position.longitude,
+        radiusKm: 30,
+      );
     } catch (e) {
       if (!mounted) return;
       context.read<FoodCubit>().showFailure(e.toString());
@@ -130,9 +132,11 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
   List<FoodRestaurant> _filteredRestaurants(List<FoodRestaurant> restaurants) {
     final query = _searchController.text.trim().toLowerCase();
     return restaurants.where((restaurant) {
-      final matchesCategory = _selectedCategory == 'All' ||
+      final matchesCategory =
+          _selectedCategory == 'All' ||
           restaurant.categories.any(
-            (category) => category.name.toLowerCase() == _selectedCategory.toLowerCase(),
+            (category) =>
+                category.name.toLowerCase() == _selectedCategory.toLowerCase(),
           );
 
       if (!matchesCategory) return false;
@@ -173,8 +177,11 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                   ? state.restaurants
                   : _cachedRestaurants;
 
-              if (_isLoadingLocation || (state is FoodLoading && restaurants.isEmpty)) {
-                return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+              if (_isLoadingLocation ||
+                  (state is FoodLoading && restaurants.isEmpty)) {
+                return const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                );
               }
 
               if (state is FoodFailure && restaurants.isEmpty) {
@@ -202,12 +209,15 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         },
         label: Text(
           'My Orders'.translate(context),
-          style: regular2(context).copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-          ),
+          style: regular2(
+            context,
+          ).copyWith(color: Colors.white, fontWeight: FontWeight.w800),
         ),
-        icon: const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 20),
+        icon: const Icon(
+          Icons.receipt_long_rounded,
+          color: Colors.white,
+          size: 20,
+        ),
       ),
     );
   }
@@ -233,10 +243,9 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           children: [
             Text(
               'Restaurants near you'.translate(context),
-              style: heading3Grey1(context).copyWith(
-                color: _ink,
-                fontWeight: FontWeight.w900,
-              ),
+              style: heading3Grey1(
+                context,
+              ).copyWith(color: _ink, fontWeight: FontWeight.w900),
             ),
             Text(
               '${filteredRestaurants.length} found',
@@ -252,13 +261,16 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           _InlineEmptyState(
             icon: Icons.storefront_rounded,
             title: 'No nearby restaurants found'.translate(context),
-            subtitle: 'Try refreshing or increasing delivery coverage from restaurant branch settings.'.translate(context),
+            subtitle:
+                'Try refreshing or increasing delivery coverage from restaurant branch settings.'
+                    .translate(context),
           )
         else if (filteredRestaurants.isEmpty)
           _InlineEmptyState(
             icon: Icons.search_off_rounded,
             title: 'No matching food found'.translate(context),
-            subtitle: 'Try a restaurant name, item name, or another category.'.translate(context),
+            subtitle: 'Try a restaurant name, item name, or another category.'
+                .translate(context),
           )
         else
           ...filteredRestaurants.map((restaurant) {
@@ -312,7 +324,11 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                   onTap: _initializeAndLoadRestaurants,
                   child: const Padding(
                     padding: EdgeInsets.all(11),
-                    child: Icon(Icons.my_location_rounded, color: Colors.white, size: 21),
+                    child: Icon(
+                      Icons.my_location_rounded,
+                      color: Colors.white,
+                      size: 21,
+                    ),
                   ),
                 ),
               ),
@@ -325,12 +341,18 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const FoodOrdersScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const FoodOrdersScreen(),
+                      ),
                     );
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(11),
-                    child: Icon(Icons.shopping_bag_rounded, color: themeColor, size: 21),
+                    child: Icon(
+                      Icons.shopping_bag_rounded,
+                      color: themeColor,
+                      size: 21,
+                    ),
                   ),
                 ),
               ),
@@ -338,7 +360,8 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            'Order your favourites from local restaurants with live tracking.'.translate(context),
+            'Order your favourites from local restaurants with live tracking.'
+                .translate(context),
             style: regular2(context).copyWith(
               color: Colors.white.withValues(alpha: 0.9),
               height: 1.35,
@@ -350,7 +373,10 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _HeroPill(icon: Icons.storefront_rounded, text: '$count restaurants'),
+              _HeroPill(
+                icon: Icons.storefront_rounded,
+                text: '$count restaurants',
+              ),
               const _HeroPill(icon: Icons.timer_rounded, text: 'Fast delivery'),
               const _HeroPill(icon: Icons.verified_rounded, text: 'Fresh menu'),
             ],
@@ -386,7 +412,10 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
                   icon: const Icon(Icons.close_rounded),
                 ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 16,
+          ),
         ),
       ),
     );
@@ -413,9 +442,13 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
             backgroundColor: Colors.white,
             selectedColor: themeColor,
             side: BorderSide(
-              color: selected ? themeColor : Colors.black.withValues(alpha: 0.06),
+              color: selected
+                  ? themeColor
+                  : Colors.black.withValues(alpha: 0.06),
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             onSelected: (_) => setState(() => _selectedCategory = category),
           );
         },
@@ -432,7 +465,9 @@ class _FoodHomeScreenState extends State<FoodHomeScreen> {
         _InlineEmptyState(
           icon: icon,
           title: message,
-          subtitle: 'Pull down to retry loading restaurants.'.translate(context),
+          subtitle: 'Pull down to retry loading restaurants.'.translate(
+            context,
+          ),
         ),
       ],
     );
@@ -447,7 +482,8 @@ class RestaurantCard extends StatelessWidget {
   String _resolveImageUrl(String? raw) {
     final value = (raw ?? '').trim();
     if (value.isEmpty) return '';
-    if (value.startsWith('http://') || value.startsWith('https://')) return value;
+    if (value.startsWith('http://') || value.startsWith('https://'))
+      return value;
     final normalized = value.startsWith('/') ? value : '/$value';
     return '${Config.baseDomain}$normalized';
   }
@@ -469,7 +505,9 @@ class RestaurantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coverUrl = _resolveImageUrl(restaurant.coverImage ?? restaurant.logoImage);
+    final coverUrl = _resolveImageUrl(
+      restaurant.coverImage ?? restaurant.logoImage,
+    );
     final logoUrl = _resolveImageUrl(restaurant.logoImage);
     final itemPreview = restaurant.categories
         .expand((category) => category.items)
@@ -477,7 +515,8 @@ class RestaurantCard extends StatelessWidget {
         .map((item) => item.name)
         .where((name) => name.trim().isNotEmpty)
         .join(' - ');
-    final availabilityLabel = restaurant.availabilityLabel ??
+    final availabilityLabel =
+        restaurant.availabilityLabel ??
         (restaurant.isAcceptingOrders ? 'Open now' : 'Closed');
 
     return Material(
@@ -489,7 +528,9 @@ class RestaurantCard extends StatelessWidget {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => FoodMenuScreen(restaurant: restaurant)),
+            MaterialPageRoute(
+              builder: (_) => FoodMenuScreen(restaurant: restaurant),
+            ),
           );
         },
         child: Container(
@@ -510,7 +551,9 @@ class RestaurantCard extends StatelessWidget {
               Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(26),
+                    ),
                     child: SizedBox(
                       height: 150,
                       width: double.infinity,
@@ -526,7 +569,9 @@ class RestaurantCard extends StatelessWidget {
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(26),
+                        ),
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -587,18 +632,32 @@ class RestaurantCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        _InfoPill(icon: Icons.timer_rounded, text: _deliveryTime),
+                        _InfoPill(
+                          icon: Icons.timer_rounded,
+                          text: _deliveryTime,
+                        ),
                         const SizedBox(width: 8),
-                        _InfoPill(icon: Icons.near_me_rounded, text: _distanceText),
+                        _InfoPill(
+                          icon: Icons.near_me_rounded,
+                          text: _distanceText,
+                        ),
                         const Spacer(),
-                        Icon(Icons.arrow_forward_rounded, color: themeColor, size: 20),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          color: themeColor,
+                          size: 20,
+                        ),
                       ],
                     ),
                     if ((restaurant.branchAddress ?? '').trim().isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Icon(Icons.location_on_rounded, color: Colors.black.withValues(alpha: 0.35), size: 16),
+                          Icon(
+                            Icons.location_on_rounded,
+                            color: Colors.black.withValues(alpha: 0.35),
+                            size: 16,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -708,11 +767,9 @@ class _MetaBadge extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             text,
-            style: regular2(context).copyWith(
-              color: _ink,
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-            ),
+            style: regular2(
+              context,
+            ).copyWith(color: _ink, fontSize: 11, fontWeight: FontWeight.w900),
           ),
         ],
       ),
@@ -741,11 +798,9 @@ class _InfoPill extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             text,
-            style: regular2(context).copyWith(
-              color: _ink,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-            ),
+            style: regular2(
+              context,
+            ).copyWith(color: _ink, fontSize: 11, fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -754,10 +809,7 @@ class _InfoPill extends StatelessWidget {
 }
 
 class _AvailabilityPill extends StatelessWidget {
-  const _AvailabilityPill({
-    required this.isOpen,
-    required this.label,
-  });
+  const _AvailabilityPill({required this.isOpen, required this.label});
 
   final bool isOpen;
   final String label;
@@ -782,11 +834,9 @@ class _AvailabilityPill extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: regular2(context).copyWith(
-              color: _ink,
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-            ),
+            style: regular2(
+              context,
+            ).copyWith(color: _ink, fontSize: 11, fontWeight: FontWeight.w900),
           ),
         ],
       ),
@@ -814,7 +864,8 @@ class _AvatarImage extends StatelessWidget {
           ? Image.network(
               imageUrl,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Icon(Icons.restaurant_rounded, color: themeColor),
+              errorBuilder: (_, __, ___) =>
+                  Icon(Icons.restaurant_rounded, color: themeColor),
             )
           : Icon(Icons.restaurant_rounded, color: themeColor),
     );
@@ -848,10 +899,9 @@ class _InlineEmptyState extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: heading3Grey1(context).copyWith(
-              color: _ink,
-              fontWeight: FontWeight.w900,
-            ),
+            style: heading3Grey1(
+              context,
+            ).copyWith(color: _ink, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 8),
           Text(
@@ -867,5 +917,3 @@ class _InlineEmptyState extends StatelessWidget {
     );
   }
 }
-
-

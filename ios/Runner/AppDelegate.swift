@@ -16,7 +16,9 @@ import CoreLocation  // ✅ Import CoreLocation for location services
     ) -> Bool {
         
         // Initialize Google Maps
-        GMSServices.provideAPIKey("YOUR_GOOGLE_MAPS_API_KEY_HERE")
+        if let mapsApiKey = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String {
+            GMSServices.provideAPIKey(mapsApiKey)
+        }
         
         // Initialize Firebase
         FirebaseApp.configure()
@@ -105,4 +107,3 @@ import CoreLocation  // ✅ Import CoreLocation for location services
         }
     }
 }
-

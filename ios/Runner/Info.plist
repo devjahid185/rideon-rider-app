@@ -66,7 +66,7 @@
 
 	<!-- ✅ Google Maps API Key (must be set correctly) -->
 	<key>GMSApiKey</key>
-	<string>Add_google_api_key_here</string>
+	<string>AIzaSyCm-rRAsfqyVZuth4dXJQ11cU24rV-5Zzw</string>
 
 	<!-- ✅ Firebase App ID -->
 	<key>GOOGLE_APP_ID</key>
@@ -88,6 +88,9 @@
 
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>WGN Move Rider requires access to your photo library to upload pictures of your ID or other documents for booking verification, or to add profile and property images.</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>WGN Move Rider needs access to your microphone when a payment or support web page requires audio input.</string>
 
 	<!-- ✅ Allows external keyboards / input -->
 	<key>UIApplicationSupportsIndirectInputEvents</key>

@@ -8,22 +8,16 @@ class FoodRepository {
     required double latitude,
     required double longitude,
     double radiusKm = 8,
-    int limit = 20,
   }) async {
     debugPrint(
       '[FoodRepository] nearby request '
-      'lat=$latitude lng=$longitude radius=$radiusKm limit=$limit',
+      'lat=$latitude lng=$longitude radius=$radiusKm',
     );
-    final response = await httpGet(
-      Config.foodNearbyRestaurants,
-      {
-        'latitude': latitude.toString(),
-        'longitude': longitude.toString(),
-        'radius_km': radiusKm.toString(),
-        'limit': limit.toString(),
-      },
-      context: navigatorKey.currentContext!,
-    );
+    final response = await httpGet(Config.foodNearbyRestaurants, {
+      'latitude': latitude.toString(),
+      'longitude': longitude.toString(),
+      'radius_km': radiusKm.toString(),
+    }, context: navigatorKey.currentContext!);
     final mapped = Map<String, dynamic>.from(response ?? {});
     final data = mapped['data'];
     debugPrint(
@@ -56,20 +50,12 @@ class FoodRepository {
     return Map<String, dynamic>.from(response ?? {});
   }
 
-  Future<Map<String, dynamic>> getMyFoodOrders({
-    String? status,
-    int limit = 20,
-  }) async {
-    final response = await httpGet(
-      Config.foodMyOrders,
-      {
-        'token': token,
-        if (status != null && status.isNotEmpty) 'status': status,
-        'limit': limit.toString(),
-        '_ts': DateTime.now().millisecondsSinceEpoch.toString(),
-      },
-      context: navigatorKey.currentContext!,
-    );
+  Future<Map<String, dynamic>> getMyFoodOrders({String? status}) async {
+    final response = await httpGet(Config.foodMyOrders, {
+      'token': token,
+      if (status != null && status.isNotEmpty) 'status': status,
+      '_ts': DateTime.now().millisecondsSinceEpoch.toString(),
+    }, context: navigatorKey.currentContext!);
     final mapped = Map<String, dynamic>.from(response ?? {});
     final data = mapped['data'];
     debugPrint(
@@ -85,13 +71,9 @@ class FoodRepository {
   Future<Map<String, dynamic>> getFoodOrderDetails({
     required int orderId,
   }) async {
-    final response = await httpGet(
-      '${Config.foodOrderDetails}/$orderId',
-      {
-        'token': token,
-      },
-      context: navigatorKey.currentContext!,
-    );
+    final response = await httpGet('${Config.foodOrderDetails}/$orderId', {
+      'token': token,
+    }, context: navigatorKey.currentContext!);
     return Map<String, dynamic>.from(response ?? {});
   }
 
@@ -100,9 +82,7 @@ class FoodRepository {
   }) async {
     final response = await httpGet(
       '${Config.foodOrderTimeline}/$orderId/timeline',
-      {
-        'token': token,
-      },
+      {'token': token},
       context: navigatorKey.currentContext!,
     );
     return Map<String, dynamic>.from(response ?? {});

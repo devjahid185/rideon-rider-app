@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ride_on/core/extensions/workspace.dart';
 import 'package:ride_on/core/utils/theme/project_color.dart';
 import 'package:ride_on/core/utils/theme/theme_style.dart';
 import 'package:ride_on/core/utils/translate.dart';
 import 'package:ride_on/data/repositories/food_repository.dart';
 import 'package:ride_on/domain/entities/food_models.dart';
+import 'package:ride_on/presentation/cubits/food_cubit.dart';
 import 'package:ride_on/presentation/screens/food/food_payment_webview_screen.dart';
 import 'package:ride_on/presentation/screens/search/search_map_screen.dart';
 
@@ -51,12 +55,15 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   }
 
   int get _cartCount => widget.cartQty.values.fold(0, (sum, qty) => sum + qty);
-  double get _taxAmount => double.parse((_itemsSubtotal * 0.05).toStringAsFixed(2));
+  double get _taxAmount =>
+      double.parse((_itemsSubtotal * 0.05).toStringAsFixed(2));
   double get _deliveryFee => 30.0;
   double get _platformFee => 5.0;
   double get _totalAmount => double.parse(
-        (_itemsSubtotal + _taxAmount + _deliveryFee + _platformFee).toStringAsFixed(2),
-      );
+    (_itemsSubtotal + _taxAmount + _deliveryFee + _platformFee).toStringAsFixed(
+      2,
+    ),
+  );
 
   @override
   void initState() {
@@ -102,7 +109,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
   Future<void> _payAndPlaceOrder() async {
     if (!widget.restaurant.isAcceptingOrders) {
-      _showMessage('Restaurant is currently closed. You can browse the menu, but ordering is unavailable.'.translate(context));
+      _showMessage(
+        'Restaurant is currently closed. You can browse the menu, but ordering is unavailable.'
+            .translate(context),
+      );
       return;
     }
     final address = _addressController.text.trim();
@@ -123,7 +133,12 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         if (!mounted) return;
 
         if (response['status'] != 200 && response['status'] != 201) {
-          _showMessage((response['message'] ?? response['error'] ?? 'Unable to start payment').toString());
+          _showMessage(
+            (response['message'] ??
+                    response['error'] ??
+                    'Unable to start payment')
+                .toString(),
+          );
           return;
         }
 
@@ -132,7 +147,11 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
             : <String, dynamic>{};
         paymentUrl = (data['payment_url'] ?? '').toString();
         if (paymentUrl.isEmpty) {
-          _showMessage('Stripe payment URL was not returned by the server'.translate(context));
+          _showMessage(
+            'Stripe payment URL was not returned by the server'.translate(
+              context,
+            ),
+          );
           return;
         }
         _pendingPaymentUrl = paymentUrl;
@@ -148,11 +167,13 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       if (!mounted) return;
 
       if (paymentResult != false && paymentResult != null) {
-        final orderId = int.tryParse(paymentResult.toString()) ??
+        final orderId =
+            int.tryParse(paymentResult.toString()) ??
             _orderIdFromPaymentUrl(paymentUrl);
-        final verified = orderId != null
+        final verifiedOrder = orderId != null
             ? await _waitForPaidOrder(orderId)
-            : true;
+            : null;
+        final verified = orderId == null || verifiedOrder != null;
         if (!mounted) return;
 
         if (!verified) {
@@ -161,14 +182,21 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                 .translate(context),
           );
         } else {
-          _showMessage(
-              'Payment successful. Order placed.'.translate(context));
+          if (verifiedOrder != null) {
+            context.read<FoodCubit>().rememberOrder(verifiedOrder);
+            unawaited(context.read<FoodCubit>().loadMyOrders());
+          }
+          _showMessage('Payment successful. Order placed.'.translate(context));
         }
         Navigator.pop(context, true);
         return;
       }
 
-      _showMessage('Payment was not completed. Your order was not placed.'.translate(context));
+      _showMessage(
+        'Payment was not completed. Your order was not placed.'.translate(
+          context,
+        ),
+      );
     } catch (e) {
       if (mounted) _showMessage(e.toString());
     } finally {
@@ -182,36 +210,35 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     );
   }
 
-  Future<bool> _waitForPaidOrder(int orderId) async {
+  Future<Map<String, dynamic>?> _waitForPaidOrder(int orderId) async {
     for (var attempt = 0; attempt < 5; attempt++) {
-      final response =
-          await _repository.getFoodOrderDetails(orderId: orderId);
+      final response = await _repository.getFoodOrderDetails(orderId: orderId);
       final data = response['data'] is Map
           ? Map<String, dynamic>.from(response['data'] as Map)
           : <String, dynamic>{};
-      final paymentStatus =
-          (data['payment_status'] ?? '').toString().toLowerCase();
+      final paymentStatus = (data['payment_status'] ?? '')
+          .toString()
+          .toLowerCase();
       final status = (data['status'] ?? '').toString().toLowerCase();
       if (response['status'] == 200 &&
           paymentStatus == 'paid' &&
           status != 'payment_pending') {
-        return true;
+        return data;
       }
       await Future<void>.delayed(const Duration(milliseconds: 700));
-      if (!mounted) return false;
+      if (!mounted) return null;
     }
-    return false;
+    return null;
   }
 
   Map<String, dynamic> _buildOrderPayload({required String address}) {
     final items = widget.cartQty.entries.map((entry) {
-      return {
-        'food_item_id': entry.key,
-        'quantity': entry.value,
-      };
+      return {'food_item_id': entry.key, 'quantity': entry.value};
     }).toList();
 
-    final name = '${loginModel?.data?.firstName ?? ''} ${loginModel?.data?.lastName ?? ''}'.trim();
+    final name =
+        '${loginModel?.data?.firstName ?? ''} ${loginModel?.data?.lastName ?? ''}'
+            .trim();
 
     return <String, dynamic>{
       'token': token,
@@ -221,10 +248,12 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
       'delivery_latitude': _deliveryLat,
       'delivery_longitude': _deliveryLng,
       if (name.isNotEmpty) 'customer_name': name,
-      if ((loginModel?.data?.phone ?? '').isNotEmpty) 'customer_phone': loginModel!.data!.phone,
+      if ((loginModel?.data?.phone ?? '').isNotEmpty)
+        'customer_phone': loginModel!.data!.phone,
       if ((loginModel?.data?.phoneCountry ?? '').isNotEmpty)
         'customer_phone_country': loginModel!.data!.phoneCountry,
-      if ((loginModel?.data?.email ?? '').isNotEmpty) 'customer_email': loginModel!.data!.email,
+      if ((loginModel?.data?.email ?? '').isNotEmpty)
+        'customer_email': loginModel!.data!.email,
       'customer_note': _noteController.text.trim(),
       'payment_status': 'pending',
       'payment_method': _paymentMethod,
@@ -233,7 +262,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -294,10 +325,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   widget.restaurant.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: heading2Grey1(context).copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: heading2Grey1(
+                    context,
+                  ).copyWith(color: Colors.white, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -318,7 +348,11 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
               color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(Icons.lock_rounded, color: Colors.white, size: 30),
+            child: const Icon(
+              Icons.lock_rounded,
+              color: Colors.white,
+              size: 30,
+            ),
           ),
         ],
       ),
@@ -344,7 +378,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                 child: Text(
                   _deliveryLat != null && _deliveryLng != null
                       ? 'Precise map location selected'.translate(context)
-                      : 'Pick from map for accurate delivery'.translate(context),
+                      : 'Pick from map for accurate delivery'.translate(
+                          context,
+                        ),
                   style: regular2(context).copyWith(color: grey2, fontSize: 12),
                 ),
               ),
@@ -353,10 +389,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                 icon: Icon(Icons.map_rounded, color: themeColor, size: 18),
                 label: Text(
                   'Map'.translate(context),
-                  style: regular2(context).copyWith(
-                    color: themeColor,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: regular2(
+                    context,
+                  ).copyWith(color: themeColor, fontWeight: FontWeight.w900),
                 ),
               ),
             ],
@@ -377,7 +412,11 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
 
   Widget _buildPaymentMethods() {
     const methods = [
-      _PaymentOption('stripe', 'Stripe secure card payment', Icons.credit_card_rounded),
+      _PaymentOption(
+        'stripe',
+        'Stripe secure card payment',
+        Icons.credit_card_rounded,
+      ),
     ];
 
     return _checkoutCard(
@@ -397,12 +436,17 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   color: selected ? themeColor : const Color(0xFFF7F9FC),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: selected ? themeColor : Colors.black.withValues(alpha: 0.05),
+                    color: selected
+                        ? themeColor
+                        : Colors.black.withValues(alpha: 0.05),
                   ),
                 ),
                 child: Row(
                   children: [
-                    Icon(method.icon, color: selected ? Colors.white : themeColor),
+                    Icon(
+                      method.icon,
+                      color: selected ? Colors.white : themeColor,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -415,7 +459,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                       ),
                     ),
                     Icon(
-                      selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                      selected
+                          ? Icons.check_circle_rounded
+                          : Icons.circle_outlined,
                       color: selected ? Colors.white : grey3,
                     ),
                   ],
@@ -451,7 +497,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
                   ),
                   Text(
                     '\$${(item.basePrice * entry.value).toStringAsFixed(2)}',
-                    style: regular2(context).copyWith(fontWeight: FontWeight.w800),
+                    style: regular2(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w800),
                   ),
                 ],
               ),
@@ -501,7 +549,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         18,
         14,
         18,
-        MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 10 : 18,
+        MediaQuery.of(context).padding.bottom > 0
+            ? MediaQuery.of(context).padding.bottom + 10
+            : 18,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -520,17 +570,25 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
           foregroundColor: Colors.white,
           disabledBackgroundColor: themeColor.withValues(alpha: 0.55),
           minimumSize: const Size.fromHeight(56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: _isPaying
             ? const SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
             : Text(
                 '${'Continue to Stripe'.translate(context)} - \$${_totalAmount.toStringAsFixed(2)}',
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
               ),
       ),
     );
@@ -555,10 +613,9 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
         children: [
           Text(
             title,
-            style: heading3Grey1(context).copyWith(
-              fontWeight: FontWeight.w900,
-              color: blackColor,
-            ),
+            style: heading3Grey1(
+              context,
+            ).copyWith(fontWeight: FontWeight.w900, color: blackColor),
           ),
           const SizedBox(height: 14),
           child,
@@ -567,7 +624,10 @@ class _FoodCheckoutScreenState extends State<FoodCheckoutScreen> {
     );
   }
 
-  InputDecoration _inputDecoration({required String label, required IconData icon}) {
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+  }) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: themeColor),

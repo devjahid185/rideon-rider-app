@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,16 +35,15 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
   void initState() {
     super.initState();
     _cachedOrders = context.read<FoodCubit>().myOrders;
-    context.read<FoodCubit>().loadMyOrders(limit: 200);
+    context.read<FoodCubit>().loadMyOrders();
     var syncAttempt = 0;
-    _initialSyncTimer =
-        Timer.periodic(const Duration(seconds: 2), (timer) {
+    _initialSyncTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
       if (!mounted || _selectedOrderId != null) {
         timer.cancel();
         return;
       }
       syncAttempt++;
-      context.read<FoodCubit>().loadMyOrders(limit: 200);
+      context.read<FoodCubit>().loadMyOrders();
       if (syncAttempt >= 4) timer.cancel();
     });
     _timer = Timer.periodic(const Duration(seconds: 8), (_) {
@@ -53,7 +52,7 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
         context.read<FoodCubit>().loadOrderDetails(_selectedOrderId!);
         context.read<FoodCubit>().loadOrderTimeline(_selectedOrderId!);
       } else {
-        context.read<FoodCubit>().loadMyOrders(limit: 200);
+        context.read<FoodCubit>().loadMyOrders();
       }
     });
   }
@@ -71,7 +70,7 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
       _selectedOrderId = null;
       _timeline = [];
     });
-    context.read<FoodCubit>().loadMyOrders(limit: 200);
+    context.read<FoodCubit>().loadMyOrders();
   }
 
   Future<void> _refreshOrders({bool showToast = true}) async {
@@ -79,7 +78,7 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
       _manualRefreshTarget = 'orders';
       _manualRefreshPending = 1;
     }
-    await context.read<FoodCubit>().loadMyOrders(limit: 200);
+    await context.read<FoodCubit>().loadMyOrders();
   }
 
   Future<void> _refreshSelectedOrder({bool showToast = true}) async {
@@ -119,11 +118,15 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.fromLTRB(18, 0, 18, 22),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        backgroundColor: isError ? const Color(0xFFD93025) : const Color(0xFF148A45),
+        backgroundColor: isError
+            ? const Color(0xFFD93025)
+            : const Color(0xFF148A45),
         content: Row(
           children: [
             Icon(
-              isError ? Icons.error_outline_rounded : Icons.check_circle_rounded,
+              isError
+                  ? Icons.error_outline_rounded
+                  : Icons.check_circle_rounded,
               color: Colors.white,
               size: 20,
             ),
@@ -189,7 +192,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
                 )
               : null,
           title: Text(
-            isShowingDetails ? 'Order Details'.translate(context) : 'My Food Orders'.translate(context),
+            isShowingDetails
+                ? 'Order Details'.translate(context)
+                : 'My Food Orders'.translate(context),
             style: heading3Grey1(context).copyWith(
               color: _ordersInk,
               fontWeight: FontWeight.w900,
@@ -214,10 +219,14 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
             if (state is FoodOrderDetailsLoaded) {
               setState(() {
                 _selectedOrder = state.order;
-                _selectedOrderId = int.tryParse((state.order['id'] ?? '').toString()) ?? _selectedOrderId;
+                _selectedOrderId =
+                    int.tryParse((state.order['id'] ?? '').toString()) ??
+                    _selectedOrderId;
               });
               if (_manualRefreshTarget == 'details') {
-                _handleManualRefreshSuccess('Order details refreshed successfully');
+                _handleManualRefreshSuccess(
+                  'Order details refreshed successfully',
+                );
               }
             }
             if (state is FoodOrderTimelineLoaded) {
@@ -225,7 +234,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
                 _timeline = state.timeline;
               });
               if (_manualRefreshTarget == 'details') {
-                _handleManualRefreshSuccess('Order details refreshed successfully');
+                _handleManualRefreshSuccess(
+                  'Order details refreshed successfully',
+                );
               }
             }
             if (state is FoodMyOrdersLoaded) {
@@ -234,7 +245,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
               });
               if (_manualRefreshTarget == 'orders') {
                 _handleManualRefreshSuccess(
-                  state.orders.isEmpty ? 'No food orders found' : 'Orders refreshed successfully',
+                  state.orders.isEmpty
+                      ? 'No food orders found'
+                      : 'Orders refreshed successfully',
                 );
               }
             }
@@ -248,14 +261,18 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
             }
 
             if (state is FoodLoading && _cachedOrders.isEmpty) {
-              return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+              return const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              );
             }
 
             if (state is FoodFailure && _cachedOrders.isEmpty) {
               return _buildEmptyState(
                 icon: Icons.error_outline_rounded,
                 title: state.message,
-                subtitle: 'Pull down or tap refresh to try again.'.translate(context),
+                subtitle: 'Pull down or tap refresh to try again.'.translate(
+                  context,
+                ),
               );
             }
 
@@ -263,8 +280,8 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
             final orders = state is FoodMyOrdersLoaded
                 ? state.orders
                 : cubitOrders.isNotEmpty
-                    ? cubitOrders
-                    : _cachedOrders;
+                ? cubitOrders
+                : _cachedOrders;
             final filtered = _filteredOrders(orders);
             return RefreshIndicator(
               color: themeColor,
@@ -293,7 +310,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
           _buildEmptyState(
             icon: Icons.receipt_long_rounded,
             title: 'No food orders yet'.translate(context),
-            subtitle: 'Your placed food orders and live tracking will appear here.'.translate(context),
+            subtitle:
+                'Your placed food orders and live tracking will appear here.'
+                    .translate(context),
           )
         else if (filteredOrders.isEmpty)
           _buildEmptyState(
@@ -372,7 +391,11 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
               color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(Icons.delivery_dining_rounded, color: Colors.white, size: 30),
+            child: const Icon(
+              Icons.delivery_dining_rounded,
+              color: Colors.white,
+              size: 30,
+            ),
           ),
         ],
       ),
@@ -401,9 +424,13 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
             backgroundColor: Colors.white,
             selectedColor: themeColor,
             side: BorderSide(
-              color: selected ? themeColor : Colors.black.withValues(alpha: 0.06),
+              color: selected
+                  ? themeColor
+                  : Colors.black.withValues(alpha: 0.06),
             ),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             onSelected: (_) => setState(() => _filter = filter),
           );
         },
@@ -430,10 +457,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: heading3Grey1(context).copyWith(
-              color: _ordersInk,
-              fontWeight: FontWeight.w900,
-            ),
+            style: heading3Grey1(
+              context,
+            ).copyWith(color: _ordersInk, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 8),
           Text(
@@ -455,11 +481,16 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
     final paymentStatus = (order['payment_status'] ?? '').toString();
     final paymentMethod = (order['payment_method'] ?? '').toString();
     final address = (order['delivery_address'] ?? 'N/A').toString();
-    final total = double.tryParse(order['total_amount']?.toString() ?? '0') ?? 0.0;
-    final itemsSubtotal = double.tryParse(order['items_subtotal']?.toString() ?? '0') ?? 0.0;
-    final deliveryFee = double.tryParse(order['delivery_fee']?.toString() ?? '0') ?? 0.0;
-    final platformFee = double.tryParse(order['platform_fee']?.toString() ?? '0') ?? 0.0;
-    final taxAmount = double.tryParse(order['tax_amount']?.toString() ?? '0') ?? 0.0;
+    final total =
+        double.tryParse(order['total_amount']?.toString() ?? '0') ?? 0.0;
+    final itemsSubtotal =
+        double.tryParse(order['items_subtotal']?.toString() ?? '0') ?? 0.0;
+    final deliveryFee =
+        double.tryParse(order['delivery_fee']?.toString() ?? '0') ?? 0.0;
+    final platformFee =
+        double.tryParse(order['platform_fee']?.toString() ?? '0') ?? 0.0;
+    final taxAmount =
+        double.tryParse(order['tax_amount']?.toString() ?? '0') ?? 0.0;
     final orderNumber = (order['order_number'] ?? '').toString();
     final deliveryOtp = (order['delivery_otp'] ?? '').toString();
     final restaurant = order['restaurant'] is Map
@@ -504,7 +535,11 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
                         color: themeColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(18),
                       ),
-                      child: Icon(Icons.restaurant_rounded, color: themeColor, size: 28),
+                      child: Icon(
+                        Icons.restaurant_rounded,
+                        color: themeColor,
+                        size: 28,
+                      ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -543,7 +578,11 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.location_on_rounded, size: 20, color: themeColor),
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 20,
+                        color: themeColor,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -576,7 +615,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
             ),
           ),
           const SizedBox(height: 22),
-          if (deliveryOtp.isNotEmpty && status != 'delivered' && status != 'cancelled') ...[
+          if (deliveryOtp.isNotEmpty &&
+              status != 'delivered' &&
+              status != 'cancelled') ...[
             _buildDeliveryOtpCard(deliveryOtp),
             const SizedBox(height: 22),
           ],
@@ -609,10 +650,7 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            themeColor,
-            const Color(0xFFFFB52E),
-          ],
+          colors: [themeColor, const Color(0xFFFFB52E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -634,7 +672,11 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
               color: Colors.white.withValues(alpha: 0.22),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 30),
+            child: const Icon(
+              Icons.verified_user_rounded,
+              color: Colors.white,
+              size: 30,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -660,7 +702,8 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Give this OTP to the driver after receiving your food.'.translate(context),
+                  'Give this OTP to the driver after receiving your food.'
+                      .translate(context),
                   style: regular2(context).copyWith(
                     color: Colors.white.withValues(alpha: 0.9),
                     height: 1.25,
@@ -674,7 +717,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
             onPressed: () {
               Clipboard.setData(ClipboardData(text: otp));
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Delivery OTP copied'.translate(context))),
+                SnackBar(
+                  content: Text('Delivery OTP copied'.translate(context)),
+                ),
               );
             },
             icon: const Icon(Icons.copy_rounded, color: Colors.white),
@@ -687,10 +732,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
   Widget _sectionTitle(String title) {
     return Text(
       title,
-      style: heading3Grey1(context).copyWith(
-        color: _ordersInk,
-        fontWeight: FontWeight.w900,
-      ),
+      style: heading3Grey1(
+        context,
+      ).copyWith(color: _ordersInk, fontWeight: FontWeight.w900),
     );
   }
 
@@ -712,7 +756,8 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
               : <String, dynamic>{};
           final name = (food['name'] ?? 'Food item').toString();
           final qty = int.tryParse((item['quantity'] ?? 1).toString()) ?? 1;
-          final total = double.tryParse((item['line_total'] ?? 0).toString()) ?? 0;
+          final total =
+              double.tryParse((item['line_total'] ?? 0).toString()) ?? 0;
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -725,7 +770,11 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
                     color: themeColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(Icons.fastfood_rounded, color: themeColor, size: 20),
+                  child: Icon(
+                    Icons.fastfood_rounded,
+                    color: themeColor,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -733,10 +782,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: regular2(context).copyWith(
-                      color: _ordersInk,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: regular2(
+                      context,
+                    ).copyWith(color: _ordersInk, fontWeight: FontWeight.w800),
                   ),
                 ),
                 Text(
@@ -749,10 +797,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
                 const SizedBox(width: 14),
                 Text(
                   '\$${total.toStringAsFixed(2)}',
-                  style: regular2(context).copyWith(
-                    color: _ordersInk,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: regular2(
+                    context,
+                  ).copyWith(color: _ordersInk, fontWeight: FontWeight.w900),
                 ),
               ],
             ),
@@ -800,7 +847,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
           Text(
             label,
             style: regular2(context).copyWith(
-              color: isTotal ? _ordersInk : Colors.black.withValues(alpha: 0.55),
+              color: isTotal
+                  ? _ordersInk
+                  : Colors.black.withValues(alpha: 0.55),
               fontWeight: isTotal ? FontWeight.w900 : FontWeight.w700,
             ),
           ),
@@ -848,7 +897,9 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
                       shape: BoxShape.circle,
                       color: isLast ? themeColor : Colors.grey.shade300,
                       border: Border.all(
-                        color: isLast ? themeColor.withValues(alpha: 0.25) : Colors.transparent,
+                        color: isLast
+                            ? themeColor.withValues(alpha: 0.25)
+                            : Colors.transparent,
                         width: 4,
                       ),
                     ),
@@ -871,8 +922,12 @@ class _FoodOrdersScreenState extends State<FoodOrdersScreen> {
                       Text(
                         '$fromStatus -> $toStatus',
                         style: regular2(context).copyWith(
-                          fontWeight: isLast ? FontWeight.w900 : FontWeight.w700,
-                          color: isLast ? _ordersInk : Colors.black.withValues(alpha: 0.68),
+                          fontWeight: isLast
+                              ? FontWeight.w900
+                              : FontWeight.w700,
+                          color: isLast
+                              ? _ordersInk
+                              : Colors.black.withValues(alpha: 0.68),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -920,16 +975,13 @@ class OrderSummaryCard extends StatelessWidget {
   final FoodOrderSummary order;
   final VoidCallback onTap;
 
-  const OrderSummaryCard({
-    super.key,
-    required this.order,
-    required this.onTap,
-  });
+  const OrderSummaryCard({super.key, required this.order, required this.onTap});
 
   String _resolveImageUrl(String? raw) {
     final value = (raw ?? '').trim();
     if (value.isEmpty) return '';
-    if (value.startsWith('http://') || value.startsWith('https://')) return value;
+    if (value.startsWith('http://') || value.startsWith('https://'))
+      return value;
     final normalized = value.startsWith('/') ? value : '/$value';
     return '${Config.baseDomain}$normalized';
   }
@@ -975,7 +1027,10 @@ class OrderSummaryCard extends StatelessWidget {
                         ? Image.network(
                             logoUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(Icons.restaurant_rounded, color: themeColor),
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.restaurant_rounded,
+                              color: themeColor,
+                            ),
                           )
                         : Icon(Icons.restaurant_rounded, color: themeColor),
                   ),
@@ -1013,7 +1068,9 @@ class OrderSummaryCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      (order.branchAddress ?? 'Tap to view delivery and timeline').translate(context),
+                      (order.branchAddress ??
+                              'Tap to view delivery and timeline')
+                          .translate(context),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: regular2(context).copyWith(
@@ -1025,13 +1082,16 @@ class OrderSummaryCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Text(
                     '\$${order.totalAmount.toStringAsFixed(2)}',
-                    style: heading3Grey1(context).copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: themeColor,
-                    ),
+                    style: heading3Grey1(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w900, color: themeColor),
                   ),
                   const SizedBox(width: 8),
-                  Icon(Icons.arrow_forward_rounded, size: 18, color: themeColor),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 18,
+                    color: themeColor,
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -1141,7 +1201,8 @@ class StatusBadge extends StatelessWidget {
         lower.contains('way')) {
       return Colors.orange;
     }
-    if (lower.contains('deliver') || lower.contains('complete')) return Colors.green;
+    if (lower.contains('deliver') || lower.contains('complete'))
+      return Colors.green;
     if (lower.contains('cancel') || lower.contains('fail')) return Colors.red;
     return themeColor;
   }
@@ -1169,5 +1230,3 @@ class StatusBadge extends StatelessWidget {
     );
   }
 }
-
-
