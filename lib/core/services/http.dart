@@ -331,19 +331,30 @@ Future<String?> generateToken() async {
       "user_token": token,
     };
 
-    final response = await http.post(
+    var response = await http.post(
       Uri.parse(url),
       headers: headers,
       body: jsonEncode(body),
     );
 
-    final data = json.decode(response.body);
+    var data = json.decode(response.body);
+    var bearerUserToken = body["user_token"] ?? "";
+    if (response.statusCode == 419 && token.isNotEmpty) {
+      response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: jsonEncode({"secret": Config.secretKey}),
+      );
+      data = json.decode(response.body);
+      bearerUserToken = "";
+    }
+
     if (response.statusCode == 200) {
       final token = data['data']["token"].toString();
       bearerToken = token;
 
       box.put("bearerToken", token);
-      box.put("bearerUserToken", body["user_token"] ?? "");
+      box.put("bearerUserToken", bearerUserToken);
       completer.complete(token);
     } else if (response.statusCode == 419) {
       completer.complete(null);
