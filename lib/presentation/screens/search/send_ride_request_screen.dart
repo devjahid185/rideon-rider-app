@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:geolocator/geolocator.dart';
@@ -17,6 +17,7 @@ import 'package:http/http.dart' as http;
 import 'package:ride_on/core/utils/translate.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/config.dart';
+import '../../../core/services/ride_audio_recorder_service.dart';
 import '../../../core/utils/common_widget.dart';
 import '../../../core/utils/theme/project_color.dart';
 import '../../../core/utils/theme/theme_style.dart';
@@ -37,15 +38,16 @@ class SendRideRequestScreen extends StatefulWidget {
   final String statusOfRide;
   final String? pickUpOtp, dropotp, rideId, bookingId, paymentUrl;
 
-  const SendRideRequestScreen(
-      {super.key,
-      required this.selectedVehicleData,
-      required this.statusOfRide,
-      this.rideId,
-      this.pickUpOtp,
-      this.dropotp,
-      this.bookingId,
-      this.paymentUrl});
+  const SendRideRequestScreen({
+    super.key,
+    required this.selectedVehicleData,
+    required this.statusOfRide,
+    this.rideId,
+    this.pickUpOtp,
+    this.dropotp,
+    this.bookingId,
+    this.paymentUrl,
+  });
 
   @override
   State<SendRideRequestScreen> createState() => _SendRideRequestScreenState();
@@ -99,7 +101,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
       _handleFreshRide();
     } else if (status == "pending") {
       _resumePendingRide();
-    } else if (status == "accepted"|| status == "pick_up") {
+    } else if (status == "accepted" || status == "pick_up") {
       _handleAcceptedRide();
     } else if (status == "ongoing") {
       _handleOngoingRide();
@@ -116,48 +118,51 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     final rawRideData = box.get("ride_data");
     final rawDriverIds = box.get("driverIds");
     final rawNearbyDrivers = box.get("nearbyDrivers");
-    context
-        .read<VehicleDataUpdateCubit>()
-        .updateVehicleTypeSelectedId(widget.selectedVehicleData["id"]);
+    context.read<VehicleDataUpdateCubit>().updateVehicleTypeSelectedId(
+      widget.selectedVehicleData["id"],
+    );
 
     final Map<String, dynamic>? rideRequestData = rawRideRequestData is Map
         ? Map<String, dynamic>.from(rawRideRequestData)
         : null;
 
-    final Map<String, dynamic>? rideData =
-        rawRideData is Map ? Map<String, dynamic>.from(rawRideData) : null;
+    final Map<String, dynamic>? rideData = rawRideData is Map
+        ? Map<String, dynamic>.from(rawRideData)
+        : null;
 
-    final List<String> driverIds =
-        rawDriverIds is List ? rawDriverIds.whereType<String>().toList() : [];
+    final List<String> driverIds = rawDriverIds is List
+        ? rawDriverIds.whereType<String>().toList()
+        : [];
 
     final List<Map<String, dynamic>> nearbyDrivers = rawNearbyDrivers is List
         ? rawNearbyDrivers
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList()
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
         : [];
 
     if (rideRequestData == null || rideData == null || driverIds.isEmpty) {
       return;
     }
     context.read<RideRequestCubit>().listenForDriverResponses(
-          currentRequestId: widget.rideId ?? "",
-          pickupAddress: rideData["pickAddress"] ?? "",
-          dropoffAddress: rideData["dropAddress"] ?? "",
-          pickupLat: (rideData["pickLat"] ?? 0).toDouble(),
-          dropoffLat: (rideData["dropLat"] ?? 0).toDouble(),
-          pickupLng: (rideData["pickLng"] ?? 0).toDouble(),
-          dropoffLng: (rideData["dropLng"] ?? 0).toDouble(),
-          durationForSearch: int.tryParse(
-                context.read<DriverSearchIntervalCubit>().state.value ?? "60",
-              ) ??
-              60,
-          driverIds: driverIds,
-          rideId: widget.rideId ?? "",
-          context: context,
-          rideRequestData: rideRequestData,
-          nearbyDrivers: nearbyDrivers,
-        );
+      currentRequestId: widget.rideId ?? "",
+      pickupAddress: rideData["pickAddress"] ?? "",
+      dropoffAddress: rideData["dropAddress"] ?? "",
+      pickupLat: (rideData["pickLat"] ?? 0).toDouble(),
+      dropoffLat: (rideData["dropLat"] ?? 0).toDouble(),
+      pickupLng: (rideData["pickLng"] ?? 0).toDouble(),
+      dropoffLng: (rideData["dropLng"] ?? 0).toDouble(),
+      durationForSearch:
+          int.tryParse(
+            context.read<DriverSearchIntervalCubit>().state.value ?? "60",
+          ) ??
+          60,
+      driverIds: driverIds,
+      rideId: widget.rideId ?? "",
+      context: context,
+      rideRequestData: rideRequestData,
+      nearbyDrivers: nearbyDrivers,
+    );
   }
 
   void _handleAcceptedRide() {
@@ -181,27 +186,34 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     bookingId = widget.bookingId.toString();
     rideStatus = widget.statusOfRide;
     paymentUrl = widget.paymentUrl ?? "";
-    context
-        .read<GetRideRequestStatusCubit>()
-        .listenToRouteStatus(rideId: rideId);
+    context.read<GetRideRequestStatusCubit>().listenToRouteStatus(
+      rideId: rideId,
+    );
+    RideAudioRecorderService.instance.start(
+      bookingId: bookingId,
+      context: context,
+    );
     _handleLiveRideSuccess(context);
   }
 
   Future<void> getNearByDrivers() async {
     final stateData = context.read<BookRideRealTimeDataBaseCubit>().state;
     await context.read<DriverNearByCubit>().getNearbyDrivers(
-        checkRestart: false,
-        pickupLat: double.parse(stateData.pickupAddressLatitude),
-        pickupLng: double.parse(stateData.pickupAddressLongitude),
-        vehicleTypeId: widget.selectedVehicleData["id"].toString(),
-        distance: double.parse(
-            context.read<LocationAccuracyThresholdCubit>().state.value ?? "3"));
+      checkRestart: false,
+      pickupLat: double.parse(stateData.pickupAddressLatitude),
+      pickupLng: double.parse(stateData.pickupAddressLongitude),
+      vehicleTypeId: widget.selectedVehicleData["id"].toString(),
+      distance: double.parse(
+        context.read<LocationAccuracyThresholdCubit>().state.value ?? "3",
+      ),
+    );
   }
 
   bool isInilize = false;
-  Future<void> _initializeRideRequest(
-      {required List<Map<String, dynamic>> nearbyDrivers,
-      required bool checkRestart}) async {
+  Future<void> _initializeRideRequest({
+    required List<Map<String, dynamic>> nearbyDrivers,
+    required bool checkRestart,
+  }) async {
     final stateData = context.read<BookRideRealTimeDataBaseCubit>().state;
     final rideRequestData = context.read<RideRequestCubit>().state;
     if (checkRestart == true) {
@@ -213,26 +225,28 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     }
     try {
       await context.read<RideRequestCubit>().createDriverData(
-          rideId: rideId,
-          checkRestart: checkRestart,
-          durationForSearch: int.parse(
-              context.read<DriverSearchIntervalCubit>().state.value ?? "60"),
-          routeDistance: widget.selectedVehicleData["distance"].toString(),
-          context: context,
-          nearbyDrivers: nearbyDrivers,
-          userId: stateData.userId.toString(),
-          userName: stateData.userName,
-          pickupLat: double.parse(stateData.pickupAddressLatitude),
-          pickupLng: double.parse(stateData.pickupAddressLongitude),
-          pickupAddress: stateData.pickupAddress,
-          dropoffLat: double.parse(stateData.dropoffAddressLatitude),
-          dropoffLng: double.parse(stateData.dropoffAddressLongitude),
-          userPhoneNumber: loginModel!.data!.phone!,
-          dropoffAddress: stateData.dropoffAddress,
-          travelCharges: widget.selectedVehicleData["fare"].toString(),
-          routeStatus: "pending",
-          userImageUrl: myImage,
-          totalTime: widget.selectedVehicleData["duration"].toString());
+        rideId: rideId,
+        checkRestart: checkRestart,
+        durationForSearch: int.parse(
+          context.read<DriverSearchIntervalCubit>().state.value ?? "60",
+        ),
+        routeDistance: widget.selectedVehicleData["distance"].toString(),
+        context: context,
+        nearbyDrivers: nearbyDrivers,
+        userId: stateData.userId.toString(),
+        userName: stateData.userName,
+        pickupLat: double.parse(stateData.pickupAddressLatitude),
+        pickupLng: double.parse(stateData.pickupAddressLongitude),
+        pickupAddress: stateData.pickupAddress,
+        dropoffLat: double.parse(stateData.dropoffAddressLatitude),
+        dropoffLng: double.parse(stateData.dropoffAddressLongitude),
+        userPhoneNumber: loginModel!.data!.phone!,
+        dropoffAddress: stateData.dropoffAddress,
+        travelCharges: widget.selectedVehicleData["fare"].toString(),
+        routeStatus: "pending",
+        userImageUrl: myImage,
+        totalTime: widget.selectedVehicleData["duration"].toString(),
+      );
       setState(() {
         pickLat = double.parse(stateData.pickupAddressLatitude);
         pickLng = double.parse(stateData.pickupAddressLongitude);
@@ -259,15 +273,18 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     });
   }
 
-  Future<void> _updateRide(
-      {required String updatedRideId, required String upDatedBookingId}) async {
+  Future<void> _updateRide({
+    required String updatedRideId,
+    required String upDatedBookingId,
+  }) async {
     if (updatedRideId.isEmpty || upDatedBookingId.isEmpty) {
       debugPrint("Invalid rideId or bookingId");
       return;
     }
 
-    final rideRequestRef =
-        FirebaseDatabase.instance.ref().child("ride_requests");
+    final rideRequestRef = FirebaseDatabase.instance.ref().child(
+      "ride_requests",
+    );
     try {
       await rideRequestRef.child(updatedRideId).update({
         'bookingId': upDatedBookingId,
@@ -305,9 +322,12 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     }
 
     if (useGoogleApi) {
-      debugPrint('ðŸ“ Fetching using Google Distance Matrix API (with traffic)');
+      debugPrint(
+        'ðŸ“ Fetching using Google Distance Matrix API (with traffic)',
+      );
 
-      final url = 'https://maps.googleapis.com/maps/api/distancematrix/json?'
+      final url =
+          'https://maps.googleapis.com/maps/api/distancematrix/json?'
           'origins=$fromLat,$fromLng'
           '&destinations=$toLat,$toLng'
           '&departure_time=now'
@@ -325,7 +345,8 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
               data['rows'][0]['elements'][0]['status'] == 'OK') {
             final element = data['rows'][0]['elements'][0];
             final distanceText = element['distance']?['text'] ?? '';
-            final durationText = element['duration_in_traffic']?['text'] ??
+            final durationText =
+                element['duration_in_traffic']?['text'] ??
                 element['duration']?['text'] ??
                 '';
             setState(() {
@@ -333,9 +354,12 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
               fetchDuration = durationText;
             });
             debugPrint(
-                'âœ… Distance: $distanceText | Duration (with traffic): $durationText');
+              'âœ… Distance: $distanceText | Duration (with traffic): $durationText',
+            );
           } else {
-            debugPrint('âš ï¸ Error: ${data['rows'][0]['elements'][0]['status']}');
+            debugPrint(
+              'âš ï¸ Error: ${data['rows'][0]['elements'][0]['status']}',
+            );
           }
         } else {
           debugPrint('âŒ Failed: ${response.statusCode}');
@@ -356,8 +380,10 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     }
   }
 
-  Map<String, String> _formatDistanceAndEta(double meters,
-      {double avgSpeedKmph = 40}) {
+  Map<String, String> _formatDistanceAndEta(
+    double meters, {
+    double avgSpeedKmph = 40,
+  }) {
     final km = meters / 1000.0;
 
     final hours = km / avgSpeedKmph;
@@ -366,13 +392,11 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     final distanceText = km >= 1
         ? '${km.toStringAsFixed(km < 10 ? 1 : 0)} km'
         : '${meters.toStringAsFixed(0)} m';
-    final durationText =
-        mins >= 60 ? '${(mins ~/ 60)} hr ${mins % 60} min' : '$mins min';
+    final durationText = mins >= 60
+        ? '${(mins ~/ 60)} hr ${mins % 60} min'
+        : '$mins min';
 
-    return {
-      'distanceText': distanceText,
-      'durationText': durationText,
-    };
+    return {'distanceText': distanceText, 'durationText': durationText};
   }
 
   Timer? _distanceTimer;
@@ -382,57 +406,73 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   void startAutoDistanceTimer() {
     _distanceTimer?.cancel();
     _distanceTimer = Timer.periodic(
-        Duration(
-            seconds: int.parse(
-                context.read<MinimumHitsTimeToUpdateTime>().state.value ??
-                    "60")), (timer) {
-      if (rideStatus == "ongoing") {
-        stopAutoDistanceTimer();
-        return;
-      }
-      _fetchDistanceAndTime(
-          fromLat: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .pickupAddressLatitude),
-          fromLng: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .pickupAddressLongitude),
+      Duration(
+        seconds: int.parse(
+          context.read<MinimumHitsTimeToUpdateTime>().state.value ?? "60",
+        ),
+      ),
+      (timer) {
+        if (rideStatus == "ongoing") {
+          stopAutoDistanceTimer();
+          return;
+        }
+        _fetchDistanceAndTime(
+          fromLat: double.parse(
+            context
+                .read<BookRideRealTimeDataBaseCubit>()
+                .state
+                .pickupAddressLatitude,
+          ),
+          fromLng: double.parse(
+            context
+                .read<BookRideRealTimeDataBaseCubit>()
+                .state
+                .pickupAddressLongitude,
+          ),
           toLat: updatedDriverLat,
           toLng: updatedDriverLng,
-          beforePickUp: true);
+          beforePickUp: true,
+        );
 
-      setState(() {});
-    });
+        setState(() {});
+      },
+    );
   }
 
   void startAutoDistanceTimerForDropOff() {
     _distanceTimer?.cancel();
     _distanceTimer = Timer.periodic(
-        Duration(
-            seconds: int.parse(
-                context.read<MinimumHitsTimeToUpdateTime>().state.value ??
-                    "60")), (timer) {
-      if (rideStatus == "complete") {
-        stopAutoDistanceTimer();
-        return;
-      }
-      _fetchDistanceAndTime(
+      Duration(
+        seconds: int.parse(
+          context.read<MinimumHitsTimeToUpdateTime>().state.value ?? "60",
+        ),
+      ),
+      (timer) {
+        if (rideStatus == "complete") {
+          stopAutoDistanceTimer();
+          return;
+        }
+        _fetchDistanceAndTime(
           fromLat: updatedDriverLat,
           fromLng: updatedDriverLng,
-          toLat: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .dropoffAddressLatitude),
-          toLng: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .dropoffAddressLongitude),
-          beforePickUp: false);
+          toLat: double.parse(
+            context
+                .read<BookRideRealTimeDataBaseCubit>()
+                .state
+                .dropoffAddressLatitude,
+          ),
+          toLng: double.parse(
+            context
+                .read<BookRideRealTimeDataBaseCubit>()
+                .state
+                .dropoffAddressLongitude,
+          ),
+          beforePickUp: false,
+        );
 
-      setState(() {});
-    });
+        setState(() {});
+      },
+    );
   }
 
   void stopAutoDistanceTimer() {
@@ -445,12 +485,12 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   void _addUserMarker() {
     if (pickLat != 0.0 && pickLng != 0.0) {
       context.read<UserMarkerCubit>().addOrUpdateMarker(
-            LatLng(pickLat, pickLng),
-            'User Location',
-            'User_marker',
-            'assets/images/pickupmarker.png',
-            50,
-          );
+        LatLng(pickLat, pickLng),
+        'User Location',
+        'User_marker',
+        'assets/images/pickupmarker.png',
+        50,
+      );
     } else {
       debugPrint('Invalid pickup coordinates');
     }
@@ -459,12 +499,12 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   void _addDropMarker() {
     if (dropLat != 0.0 && dropLng != 0.0) {
       context.read<UserMarkerCubit>().addOrUpdateMarker(
-            LatLng(dropLat, dropLng),
-            'Drop Location',
-            'drop_marker',
-            "assets/images/dropmarker.png",
-            50,
-          );
+        LatLng(dropLat, dropLng),
+        'Drop Location',
+        'drop_marker',
+        "assets/images/dropmarker.png",
+        50,
+      );
     } else {
       debugPrint('Invalid pickup coordinates');
     }
@@ -476,12 +516,12 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     final lng = rideRequestState.acceptedDriverLng;
 
     context.read<UserMarkerCubit>().addOrUpdateMarker(
-          LatLng(lat, lng),
-          'Driver Location',
-          'driver_marker',
-          context.read<RideRequestCubit>().state.acceptedDriverImageUrl,
-          120,
-        );
+      LatLng(lat, lng),
+      'Driver Location',
+      'driver_marker',
+      context.read<RideRequestCubit>().state.acceptedDriverImageUrl,
+      120,
+    );
   }
 
   void _fetchPolylines() {
@@ -491,11 +531,12 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
     if (pickLat != 0.0 && pickLng != 0.0) {
       context.read<GetPolylineCubit>().getPolyline(
-          sourcelat: sourceLat,
-          sourcelng: sourceLng,
-          destinationlat: pickLat,
-          destinationlng: pickLng,
-          isPickupRoute: true);
+        sourcelat: sourceLat,
+        sourcelng: sourceLng,
+        destinationlat: pickLat,
+        destinationlng: pickLng,
+        isPickupRoute: true,
+      );
     } else {
       debugPrint('Invalid coordinates for polyline');
     }
@@ -514,9 +555,9 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           children: [
             _buildMapSection(),
             MultiBlocListener(
-                listeners: [
-                  BlocListener<GetRideRequestStatusCubit, String>(
-                      listener: (context, status) {
+              listeners: [
+                BlocListener<GetRideRequestStatusCubit, String>(
+                  listener: (context, status) async {
                     if (status == "rejected") {
                       box.delete("rideId");
                       showDriverCancelledRideDialog(context);
@@ -525,8 +566,18 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                     setState(() => rideStatus = status);
 
                     if (rideStatus.toString() == "ongoing") {
+                      await RideAudioRecorderService.instance.start(
+                        bookingId: bookingId,
+                        context: context,
+                      );
+                      if (!mounted || !context.mounted) return;
                       _handleLiveRideSuccess(context);
                     } else if (status == "completed") {
+                      await RideAudioRecorderService.instance.stopAndUpload(
+                        bookingId: bookingId,
+                        context: context,
+                      );
+                      if (!mounted || !context.mounted) return;
                       stopAutoDistanceTimer();
                       fetchTimer?.cancel();
                       Navigator.push(
@@ -541,9 +592,10 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                         ),
                       );
                     }
-                  }),
-                  BlocListener<DriverNearByCubit, DriverNearByState>(
-                      listener: (context, state) {
+                  },
+                ),
+                BlocListener<DriverNearByCubit, DriverNearByState>(
+                  listener: (context, state) {
                     if (state is DriverUpdated) {
                       if (state.nearbyDrivers!.isEmpty) {
                         context
@@ -553,10 +605,12 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                       }
 
                       context.read<RideRequestCubit>().updateNearByDrivers(
-                          nearbyDrivers: state.nearbyDrivers);
+                        nearbyDrivers: state.nearbyDrivers,
+                      );
                       _initializeRideRequest(
-                          nearbyDrivers: state.nearbyDrivers!,
-                          checkRestart: state.checkRestart!);
+                        nearbyDrivers: state.nearbyDrivers!,
+                        checkRestart: state.checkRestart!,
+                      );
 
                       context
                           .read<DriverNearByCubit>()
@@ -564,84 +618,82 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                     }
 
                     if (state is DriverError) {}
-                  }),
-                ],
-                child: BlocBuilder<RideRequestCubit, RideRequestState>(
-                  builder: (context, rideRequestState) {
-                    if (rideRequestState.isSubmitting &&
-                        // ignore: unrelated_type_equality_checks
-                        rideRequestState.selectedDriverId != 0) {
-                      _handleRideBooking(context, rideRequestState);
-                    }
-                    if (rideRequestState.rideMessage.isNotEmpty) {
-                      showErrorToastMessage(rideRequestState.rideMessage);
-                      context.read<RideRequestCubit>().removeRideMessage();
-                    }
-
-                    return BlocBuilder<BookRideUserCubit, BookRideUserState>(
-                      builder: (context, bookRideState) {
-                        if (bookRideState is BookRideUserSuccess &&
-                            bookRideState.pikupOtp != null) {
-                          context
-                              .read<GetRideRequestStatusCubit>()
-                              .listenToRouteStatus(
-                                  rideId: bookRideState.rideId.toString());
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            paymentUrl = bookRideState.paymentUrl ?? "";
-                            box.put("payment_url", paymentUrl);
-                            _handleBookRideSuccess(
-                                context,
-                                bookRideState.pikupOtp.toString(),
-                                bookRideState.dropOtp.toString(),
-                                bookRideState.rideId.toString(),
-                                bookRideState.bookingId.toString());
-                          });
-                          context
-                              .read<BookRideUserCubit>()
-                              .removeBookRideState();
-                        } else if (bookRideState is BookRideUserFailure) {
-                          showErrorToastMessage(
-                              bookRideState.error ?? "Failed to book ride.");
-                          context
-                              .read<BookRideUserCubit>()
-                              .removeBookRideState();
-                          box.delete("ride_data");
-                          cancelRideRequest(
-                              rideId: context
-                                  .read<RideRequestCubit>()
-                                  .state
-                                  .rideId);
-                        }
-
-                        return _buildDraggableSheet(context);
-                      },
-                    );
                   },
-                )),
+                ),
+              ],
+              child: BlocBuilder<RideRequestCubit, RideRequestState>(
+                builder: (context, rideRequestState) {
+                  if (rideRequestState.isSubmitting &&
+                      // ignore: unrelated_type_equality_checks
+                      rideRequestState.selectedDriverId != 0) {
+                    _handleRideBooking(context, rideRequestState);
+                  }
+                  if (rideRequestState.rideMessage.isNotEmpty) {
+                    showErrorToastMessage(rideRequestState.rideMessage);
+                    context.read<RideRequestCubit>().removeRideMessage();
+                  }
+
+                  return BlocBuilder<BookRideUserCubit, BookRideUserState>(
+                    builder: (context, bookRideState) {
+                      if (bookRideState is BookRideUserSuccess &&
+                          bookRideState.pikupOtp != null) {
+                        context
+                            .read<GetRideRequestStatusCubit>()
+                            .listenToRouteStatus(
+                              rideId: bookRideState.rideId.toString(),
+                            );
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          paymentUrl = bookRideState.paymentUrl ?? "";
+                          box.put("payment_url", paymentUrl);
+                          _handleBookRideSuccess(
+                            context,
+                            bookRideState.pikupOtp.toString(),
+                            bookRideState.dropOtp.toString(),
+                            bookRideState.rideId.toString(),
+                            bookRideState.bookingId.toString(),
+                          );
+                        });
+                        context.read<BookRideUserCubit>().removeBookRideState();
+                      } else if (bookRideState is BookRideUserFailure) {
+                        showErrorToastMessage(
+                          bookRideState.error ?? "Failed to book ride.",
+                        );
+                        context.read<BookRideUserCubit>().removeBookRideState();
+                        box.delete("ride_data");
+                        cancelRideRequest(
+                          rideId: context.read<RideRequestCubit>().state.rideId,
+                        );
+                      }
+
+                      return _buildDraggableSheet(context);
+                    },
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Future<void> cancelRideRequest({
-    required String rideId,
-  }) async {
+  Future<void> cancelRideRequest({required String rideId}) async {
     try {
       if (rideId.isEmpty) {
         throw Exception('Ride ID cannot be empty');
       }
 
-      final DatabaseReference rideRequestsRef =
-          FirebaseDatabase.instance.ref().child('ride_requests');
+      final DatabaseReference rideRequestsRef = FirebaseDatabase.instance
+          .ref()
+          .child('ride_requests');
       final rideRef = rideRequestsRef.child(rideId);
 
-      await rideRef.update({
-        'status': 'cancelled',
-      });
+      await rideRef.update({'status': 'cancelled'});
       final driversRef = FirebaseFirestore.instance.collection('drivers');
-      final driverQuery =
-          driversRef.where('ride_request.rideId', isEqualTo: rideId);
+      final driverQuery = driversRef.where(
+        'ride_request.rideId',
+        isEqualTo: rideId,
+      );
       final driverSnapshots = await driverQuery.get();
 
       final matchingDriverCount = driverSnapshots.docs.length;
@@ -674,30 +726,35 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     final selectedItemTypeId = widget.selectedVehicleData["id"];
     final formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     context.read<BookRideUserCubit>().bookRide(
-          context: context,
-          itemId: state.itemId,
-          serviceTypeId: widget.selectedVehicleData["serviceTypeId"].toString(),
-          totalFare: widget.selectedVehicleData["fare"].toString(),
-          rideId: state.rideId,
-          date: formattedDate,
-          itemTypeId: selectedItemTypeId,
-          estimatedDistance: widget.selectedVehicleData["distance"].toString(),
-          pickupAddress: stateData.pickupAddress,
-          pickupLat: stateData.pickupAddressLatitude,
-          pickupLng: stateData.pickupAddressLongitude,
-          dropOffAddress: stateData.dropoffAddress,
-          dropOffLat: stateData.dropoffAddressLatitude,
-          dropOffLng: stateData.dropoffAddressLongitude,
-          driverId: state.selectedDriverId.toString(),
-          paymentMethod: "Cash",
-        );
+      context: context,
+      itemId: state.itemId,
+      serviceTypeId: widget.selectedVehicleData["serviceTypeId"].toString(),
+      totalFare: widget.selectedVehicleData["fare"].toString(),
+      rideId: state.rideId,
+      date: formattedDate,
+      itemTypeId: selectedItemTypeId,
+      estimatedDistance: widget.selectedVehicleData["distance"].toString(),
+      pickupAddress: stateData.pickupAddress,
+      pickupLat: stateData.pickupAddressLatitude,
+      pickupLng: stateData.pickupAddressLongitude,
+      dropOffAddress: stateData.dropoffAddress,
+      dropOffLat: stateData.dropoffAddressLatitude,
+      dropOffLng: stateData.dropoffAddressLongitude,
+      driverId: state.selectedDriverId.toString(),
+      paymentMethod: "Cash",
+    );
   }
 
-  void _handleBookRideSuccess(BuildContext context, String pikupOtp,
-      String dropOtp, String rideID, String bookingID) {
-    context
-        .read<GetRideRequestStatusCubit>()
-        .listenToRouteStatus(rideId: rideID.toString());
+  void _handleBookRideSuccess(
+    BuildContext context,
+    String pikupOtp,
+    String dropOtp,
+    String rideID,
+    String bookingID,
+  ) {
+    context.read<GetRideRequestStatusCubit>().listenToRouteStatus(
+      rideId: rideID.toString(),
+    );
     _fetchDriverLocationFromRealtimeDB(rideID);
 
     if (isSuccessFirst) return;
@@ -712,7 +769,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     box.put("DropOtp", dropOtp);
     box.put("bookingId", bookingID);
 
-    if (widget.statusOfRide == "accepted"|| widget.statusOfRide=="pick_up") {
+    if (widget.statusOfRide == "accepted" || widget.statusOfRide == "pick_up") {
       paymentUrl = box.get("payment_url") ?? "";
     }
 
@@ -723,17 +780,22 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     _addUserMarker();
     _addDriverMarker();
     _fetchDistanceAndTime(
-        fromLat: double.parse(context
+      fromLat: double.parse(
+        context
             .read<BookRideRealTimeDataBaseCubit>()
             .state
-            .pickupAddressLatitude),
-        fromLng: double.parse(context
+            .pickupAddressLatitude,
+      ),
+      fromLng: double.parse(
+        context
             .read<BookRideRealTimeDataBaseCubit>()
             .state
-            .pickupAddressLongitude),
-        toLat: context.read<RideRequestCubit>().state.acceptedDriverLat,
-        toLng: context.read<RideRequestCubit>().state.acceptedDriverLng,
-        beforePickUp: true);
+            .pickupAddressLongitude,
+      ),
+      toLat: context.read<RideRequestCubit>().state.acceptedDriverLat,
+      toLng: context.read<RideRequestCubit>().state.acceptedDriverLng,
+      beforePickUp: true,
+    );
     startAutoDistanceTimer();
     _fetchPolylines();
     getUnreadCount(rideId, loginModel?.data?.id.toString() ?? "");
@@ -755,34 +817,41 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     _addDropMarker();
     _addDriverMarker();
     _fetchDistanceAndTime(
-        fromLat: context.read<RideRequestCubit>().state.acceptedDriverLat,
-        fromLng: context.read<RideRequestCubit>().state.acceptedDriverLng,
-        toLat: double.parse(context
+      fromLat: context.read<RideRequestCubit>().state.acceptedDriverLat,
+      fromLng: context.read<RideRequestCubit>().state.acceptedDriverLng,
+      toLat: double.parse(
+        context
             .read<BookRideRealTimeDataBaseCubit>()
             .state
-            .dropoffAddressLatitude),
-        toLng: double.parse(
-          context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .dropoffAddressLongitude,
-        ),
-        beforePickUp: false);
+            .dropoffAddressLatitude,
+      ),
+      toLng: double.parse(
+        context
+            .read<BookRideRealTimeDataBaseCubit>()
+            .state
+            .dropoffAddressLongitude,
+      ),
+      beforePickUp: false,
+    );
     context.read<GetPolylineCubit>().resetPolylines();
 
     context.read<GetPolylineCubit>().getPolyline(
-          sourcelat: context.read<RideRequestCubit>().state.acceptedDriverLat,
-          sourcelng: context.read<RideRequestCubit>().state.acceptedDriverLng,
-          isPickupRoute: false,
-          destinationlat: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .dropoffAddressLatitude),
-          destinationlng: double.parse(context
-              .read<BookRideRealTimeDataBaseCubit>()
-              .state
-              .dropoffAddressLongitude),
-        );
+      sourcelat: context.read<RideRequestCubit>().state.acceptedDriverLat,
+      sourcelng: context.read<RideRequestCubit>().state.acceptedDriverLng,
+      isPickupRoute: false,
+      destinationlat: double.parse(
+        context
+            .read<BookRideRealTimeDataBaseCubit>()
+            .state
+            .dropoffAddressLatitude,
+      ),
+      destinationlng: double.parse(
+        context
+            .read<BookRideRealTimeDataBaseCubit>()
+            .state
+            .dropoffAddressLongitude,
+      ),
+    );
     startAutoDistanceTimerForDropOff();
   }
 
@@ -801,21 +870,20 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
         .ref("ride_requests/$rideId/chat/messages")
         .onValue
         .map((event) {
-      if (event.snapshot.value == null) return 0;
+          if (event.snapshot.value == null) return 0;
 
-      Map data = event.snapshot.value as Map;
-      int count = 0;
+          Map data = event.snapshot.value as Map;
+          int count = 0;
 
-      data.forEach((key, value) {
-        if (value["senderId"] != myId && value["seen"] != true) {
-          count++;
-        }
-      });
+          data.forEach((key, value) {
+            if (value["senderId"] != myId && value["seen"] != true) {
+              count++;
+            }
+          });
 
-      return count;
-    });
+          return count;
+        });
   }
-
 
   void _fetchDriverLocationFromRealtimeDB(String rideId) async {
     try {
@@ -852,12 +920,12 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
 
   void _updateDriverMarkerPosition(double lat, double lng) {
     context.read<UserMarkerCubit>().addOrUpdateMarker(
-          LatLng(lat, lng),
-          'Driver Location',
-          'driver_marker',
-          context.read<RideRequestCubit>().state.acceptedDriverImageUrl,
-          120,
-        );
+      LatLng(lat, lng),
+      'Driver Location',
+      'driver_marker',
+      context.read<RideRequestCubit>().state.acceptedDriverImageUrl,
+      120,
+    );
   }
 
   @override
@@ -869,7 +937,6 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     isCurrentScreenActive = true;
     super.dispose();
   }
-
 
   void _animateMarkerToNextPosition(LatLng current, LatLng next) {
     const int animationDurationMs = 1000;
@@ -925,10 +992,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
         alignment: Alignment.center,
         children: [
           PersistentGoogleMap(
-            initialPosition: LatLng(
-              latitude,
-              longitude,
-            ),
+            initialPosition: LatLng(latitude, longitude),
             markers: otp.isEmpty ? {} : markers,
             polylines: otp.isEmpty ? {} : polylines,
             myLocationEnabled: false,
@@ -968,13 +1032,15 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          spreadRadius: 2),
+                        color: Colors.black26,
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
                     ],
                   ),
                   child: ListView(
@@ -1024,9 +1090,7 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           style: heading3Grey1(context),
         ),
         const SizedBox(height: 10),
-        CountdownSegmentedBar(
-          statusOfRide: widget.statusOfRide,
-        ),
+        CountdownSegmentedBar(statusOfRide: widget.statusOfRide),
         const SizedBox(height: 10),
         Divider(color: grey5),
         const SizedBox(height: 10),
@@ -1048,8 +1112,10 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                   rideStatus == ""
                       ? "Driver on the way".translate(context)
                       : rideStatus == "pick_up"
-                          ? "Driver has arrived at your pickup point"
-                          : rideStatus == "accepted"?"Driver on the way":"Reaching".translate(context),
+                      ? "Driver has arrived at your pickup point"
+                      : rideStatus == "accepted"
+                      ? "Driver on the way"
+                      : "Reaching".translate(context),
                   style: heading3Grey1(context),
                 ),
                 Text(
@@ -1065,11 +1131,14 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15), color: blackColor),
+                borderRadius: BorderRadius.circular(15),
+                color: blackColor,
+              ),
               child: Text(
                 fetchDuration.isEmpty ? "..." : fetchDuration,
-                style: heading2(context)
-                    .copyWith(color: Colors.white, fontSize: 14),
+                style: heading2(
+                  context,
+                ).copyWith(color: Colors.white, fontSize: 14),
               ),
             ),
           ],
@@ -1101,8 +1170,9 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                       ),
                       child: Text(
                         otp[index],
-                        style: regular2(context)
-                            .copyWith(color: grey1, fontSize: 14),
+                        style: regular2(
+                          context,
+                        ).copyWith(color: grey1, fontSize: 14),
                       ),
                     );
                   }),
@@ -1111,13 +1181,15 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
             ],
           ),
         ],
-        if (rideStatus == "ongoing" &&box.get("current_parcel_data")!=null ) ...[
+        if (rideStatus == "ongoing" &&
+            box.get("current_parcel_data") != null) ...[
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Share this drop OTP with the driver\nto complete the delivery".translate(context),
+                "Share this drop OTP with the driver\nto complete the delivery"
+                    .translate(context),
                 style: regular(context).copyWith(fontWeight: FontWeight.bold),
               ),
               Directionality(
@@ -1136,8 +1208,9 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                       ),
                       child: Text(
                         dropotp[index],
-                        style: regular2(context)
-                            .copyWith(color: grey1, fontSize: 14),
+                        style: regular2(
+                          context,
+                        ).copyWith(color: grey1, fontSize: 14),
                       ),
                     );
                   }),
@@ -1164,41 +1237,56 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
           return Row(
             children: [
               state.acceptedDriverImageUrl.isEmpty
-                  ? Icon(CupertinoIcons.profile_circled,
-                      color: themeColor, size: 50)
+                  ? Icon(
+                      CupertinoIcons.profile_circled,
+                      color: themeColor,
+                      size: 50,
+                    )
                   : Container(
                       decoration: BoxDecoration(
                         color: notifires.getBoxColor,
                         borderRadius: BorderRadius.circular(40),
                         boxShadow: [
                           BoxShadow(
-                              color: grey6, blurRadius: 10, spreadRadius: 10)
+                            color: grey6,
+                            blurRadius: 10,
+                            spreadRadius: 10,
+                          ),
                         ],
                       ),
                       height: 65,
                       width: 65,
                       child: ClipOval(
-                          child: myNetworkImage(state.acceptedDriverImageUrl)),
+                        child: myNetworkImage(state.acceptedDriverImageUrl),
+                      ),
                     ),
               const SizedBox(width: 15),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(state.acceptedDriverName,
-                        style: regularBlack(context).copyWith(fontSize: 14)),
-                    Text("${state.accepteDriverPhoneNumber} ",
-                        style: regularBlack(context).copyWith(fontSize: 14)),
-                    Text(state.acceptedDriverVechileNumber,
-                        style: regular(context).copyWith(fontSize: 14)),
+                    Text(
+                      state.acceptedDriverName,
+                      style: regularBlack(context).copyWith(fontSize: 14),
+                    ),
+                    Text(
+                      "${state.accepteDriverPhoneNumber} ",
+                      style: regularBlack(context).copyWith(fontSize: 14),
+                    ),
+                    Text(
+                      state.acceptedDriverVechileNumber,
+                      style: regular(context).copyWith(fontSize: 14),
+                    ),
                   ],
                 ),
               ),
               Column(
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: yelloColor2.withValues(alpha: .1),
                       borderRadius: BorderRadius.circular(12),
@@ -1209,20 +1297,16 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                         const SizedBox(width: 4),
                         Text(
                           state.driverRating,
-                          style: regularBlack(context).copyWith(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: regularBlack(
+                            context,
+                          ).copyWith(fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(
-                    height: 10,
-                  ),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
-                     
                       InkWell(
                         onTap: () async {
                           final phone = state.accepteDriverPhoneNumber;
@@ -1251,10 +1335,11 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
   Widget _buildBookingDetails(BuildContext context) {
     final stateData = context.read<BookRideRealTimeDataBaseCubit>().state;
 
-     final dynamic rawParcel = box.get('current_parcel_data');
- 
-    final Map<String, dynamic>? parcelData =
-        rawParcel != null ? Map<String, dynamic>.from(rawParcel as Map) : null;
+    final dynamic rawParcel = box.get('current_parcel_data');
+
+    final Map<String, dynamic>? parcelData = rawParcel != null
+        ? Map<String, dynamic>.from(rawParcel as Map)
+        : null;
 
     final String name = parcelData?['name']?.toString() ?? '';
     final String weight = parcelData?['weight']?.toString() ?? '';
@@ -1320,18 +1405,21 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
       children: [
         const SizedBox(height: 20),
         Text(
-            rideStatus == "ongoing"
-                ? "Total Fare".translate(context)
-                : "Ride Details".translate(context),
-            style: heading3Grey1(context)),
+          rideStatus == "ongoing"
+              ? "Total Fare".translate(context)
+              : "Ride Details".translate(context),
+          style: heading3Grey1(context),
+        ),
         const SizedBox(height: 10),
         if (rideStatus == "ongoing")
           Row(
             children: [
               Image.asset("assets/images/cashIcon.png", height: 50),
               const Spacer(),
-              Text("$currency ${widget.selectedVehicleData["fare"]}",
-                  style: heading2(context).copyWith(color: themeColor)),
+              Text(
+                "$currency ${widget.selectedVehicleData["fare"]}",
+                style: heading2(context).copyWith(color: themeColor),
+              ),
             ],
           )
         else
@@ -1368,9 +1456,10 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
               Text(
                 widget.selectedVehicleData["vehicleName"] ?? "Unknown",
                 style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
             ],
           ),
@@ -1408,8 +1497,9 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
             ),
             child: Text(
               "Cancel Ride".translate(context),
-              style: regular2(context)
-                  .copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+              style: regular2(
+                context,
+              ).copyWith(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -1462,8 +1552,8 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                             );
                       }
                       cancelRideRequest(
-                          rideId:
-                              context.read<RideRequestCubit>().state.rideId);
+                        rideId: context.read<RideRequestCubit>().state.rideId,
+                      );
                       if (widget.statusOfRide.isEmpty) {
                         Navigator.pop(context);
                         Navigator.pop(context);
@@ -1471,7 +1561,8 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const ItemHomeScreen()),
+                            builder: (context) => const ItemHomeScreen(),
+                          ),
                           (Route<dynamic> route) => false,
                         );
                         stopAutoDistanceTimer();
@@ -1481,7 +1572,9 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                       alignment: Alignment.center,
                       height: 50,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 5),
+                        horizontal: 20,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: themeColor,
                         borderRadius: BorderRadius.circular(40),
@@ -1489,7 +1582,9 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                       child: Text(
                         "Cancel Ride".translate(context),
                         style: regular2(context).copyWith(
-                            color: Colors.white, fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -1500,15 +1595,18 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
                       alignment: Alignment.center,
                       height: 50,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 5),
+                        horizontal: 20,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: notifires.getBoxColor,
                         borderRadius: BorderRadius.circular(40),
                       ),
                       child: Text(
                         "Keep Ride".translate(context),
-                        style: regular2(context).copyWith(
-                            color: grey1, fontWeight: FontWeight.bold),
+                        style: regular2(
+                          context,
+                        ).copyWith(color: grey1, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -1528,17 +1626,11 @@ void showDriverCancelledRideDialog(BuildContext context) {
     context: context,
     barrierDismissible: false, // Prevent closing by tapping outside
     builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: Colors.white,
       title: Column(
         children: [
-          const Icon(
-            Icons.car_crash,
-            color: Colors.redAccent,
-            size: 50,
-          ),
+          const Icon(Icons.car_crash, color: Colors.redAccent, size: 50),
           const SizedBox(height: 10),
           Text(
             "Driver Cancelled Ride".translate(context),
@@ -1567,9 +1659,7 @@ void showDriverCancelledRideDialog(BuildContext context) {
             box.delete("ride_data");
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
-                builder: (context) => const ItemHomeScreen(),
-              ),
+              MaterialPageRoute(builder: (context) => const ItemHomeScreen()),
               (Route<dynamic> route) => false, // Remove all previous routes
             );
           },
@@ -1630,8 +1720,10 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    final durationFromCubit =
-        context.read<DriverSearchIntervalCubit>().state.value;
+    final durationFromCubit = context
+        .read<DriverSearchIntervalCubit>()
+        .state
+        .value;
     totalSeconds = int.tryParse(durationFromCubit ?? "60") ?? 60;
     // Fixed segment count
     segmentCount = 5;
@@ -1728,28 +1820,31 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
                   box.delete("ride_data");
                   Navigator.pop(context);
                   _resetCountdown(); // Restart timer
-                  final state =
-                      context.read<BookRideRealTimeDataBaseCubit>().state;
+                  final state = context
+                      .read<BookRideRealTimeDataBaseCubit>()
+                      .state;
 
                   context.read<DriverNearByCubit>().getNearbyDrivers(
-                        checkRestart: true,
-                        distance: 15,
-                        pickupLat: double.parse(state.pickupAddressLatitude),
-                        pickupLng: double.parse(state.pickupAddressLongitude),
-                        vehicleTypeId: context
-                            .read<VehicleDataUpdateCubit>()
-                            .state
-                            .vehicleSelectedId
-                            .toString(),
-                      );
+                    checkRestart: true,
+                    distance: 15,
+                    pickupLat: double.parse(state.pickupAddressLatitude),
+                    pickupLng: double.parse(state.pickupAddressLongitude),
+                    vehicleTypeId: context
+                        .read<VehicleDataUpdateCubit>()
+                        .state
+                        .vehicleSelectedId
+                        .toString(),
+                  );
                   isManuallyCancelled = false;
                 },
                 child: Container(
                   height: 40,
                   width: 120,
                   alignment: Alignment.center,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: notifires.getBoxColor,
                     borderRadius: BorderRadius.circular(40),
@@ -1810,56 +1905,57 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
                   "We couldnâ€™t find any drivers around your pickup location. Please try again after a moment."
                       .translate(context),
                   textAlign: TextAlign.center,
-                  style: heading3Grey1(context).copyWith(
-                    color: Colors.grey[600],
-                    height: 1.4,
-                  ),
+                  style: heading3Grey1(
+                    context,
+                  ).copyWith(color: Colors.grey[600], height: 1.4),
                 ),
                 const SizedBox(height: 26),
                 CustomsButtons(
-                    text: "Try again",
-                    backgroundColor: themeColor,
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _resetCountdown();
+                  text: "Try again",
+                  backgroundColor: themeColor,
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _resetCountdown();
 
-                      final state =
-                          context.read<BookRideRealTimeDataBaseCubit>().state;
+                    final state = context
+                        .read<BookRideRealTimeDataBaseCubit>()
+                        .state;
 
-                      context.read<DriverNearByCubit>().getNearbyDrivers(
-                            checkRestart: false,
-                            distance: 15,
-                            pickupLat:
-                                double.parse(state.pickupAddressLatitude),
-                            pickupLng:
-                                double.parse(state.pickupAddressLongitude),
-                            vehicleTypeId: context
-                                .read<VehicleDataUpdateCubit>()
-                                .state
-                                .vehicleSelectedId
-                                .toString(),
-                          );
-                      setState(() {});
-                    }),
+                    context.read<DriverNearByCubit>().getNearbyDrivers(
+                      checkRestart: false,
+                      distance: 15,
+                      pickupLat: double.parse(state.pickupAddressLatitude),
+                      pickupLng: double.parse(state.pickupAddressLongitude),
+                      vehicleTypeId: context
+                          .read<VehicleDataUpdateCubit>()
+                          .state
+                          .vehicleSelectedId
+                          .toString(),
+                    );
+                    setState(() {});
+                  },
+                ),
                 const SizedBox(height: 14),
                 CustomsButtons(
-                    text: "Cancel Ride",
-                    backgroundColor: redColor2,
-                    textColor: whiteColor,
-                    onPressed: () {
-                      isManuallyCancelled = true;
-                      if (widget.statusOfRide.isEmpty) {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                      } else {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const ItemHomeScreen()),
-                          (Route<dynamic> route) => false,
-                        );
-                      }
-                    }),
+                  text: "Cancel Ride",
+                  backgroundColor: redColor2,
+                  textColor: whiteColor,
+                  onPressed: () {
+                    isManuallyCancelled = true;
+                    if (widget.statusOfRide.isEmpty) {
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    } else {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ItemHomeScreen(),
+                        ),
+                        (Route<dynamic> route) => false,
+                      );
+                    }
+                  },
+                ),
                 const SizedBox(height: 8),
               ],
             ),
@@ -1907,8 +2003,9 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
                       value: progress,
                       minHeight: 8,
                       backgroundColor: Colors.grey[300],
-                      valueColor:
-                          const AlwaysStoppedAnimation<Color>(Colors.green),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.green,
+                      ),
                     ),
                   ),
                 ),
@@ -1923,10 +2020,7 @@ class _CountdownSegmentedBarState extends State<CountdownSegmentedBar>
                 style: const TextStyle(color: Colors.grey, fontSize: 14),
               ),
               const Spacer(),
-              Text(
-                "Waiting...".translate(context),
-                style: regular(context),
-              ),
+              Text("Waiting...".translate(context), style: regular(context)),
             ],
           ),
         ],
@@ -1956,13 +2050,15 @@ class _PulsingCircleState extends State<PulsingCircle>
       vsync: this,
     )..repeat();
 
-    scaleAnimation = Tween<double>(begin: 1.0, end: 2.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 2.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    opacityAnimation = Tween<double>(begin: 0.4, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    opacityAnimation = Tween<double>(
+      begin: 0.4,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
   }
 
   @override
@@ -2062,26 +2158,27 @@ class PersistentGoogleMapState extends State<PersistentGoogleMap> {
         }
 
         return BlocBuilder<UserMarkerCubit, UserMarkerState>(
-            builder: (context, markerState) {
-          if (markerState is UserMarkerUpdated) {
-            markers = markerState.markers;
-          }
-          return GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: widget.initialPosition,
-              zoom: 15,
-            ),
-            myLocationEnabled: widget.myLocationEnabled,
-            markers: markers,
-            polylines: polyline,
-            onMapCreated: (controller) {
-              if (_mapController == null) {
-                _mapController = controller;
-                widget.onMapCreated(controller);
-              }
-            },
-          );
-        });
+          builder: (context, markerState) {
+            if (markerState is UserMarkerUpdated) {
+              markers = markerState.markers;
+            }
+            return GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: widget.initialPosition,
+                zoom: 15,
+              ),
+              myLocationEnabled: widget.myLocationEnabled,
+              markers: markers,
+              polylines: polyline,
+              onMapCreated: (controller) {
+                if (_mapController == null) {
+                  _mapController = controller;
+                  widget.onMapCreated(controller);
+                }
+              },
+            );
+          },
+        );
       },
     );
   }
@@ -2094,14 +2191,18 @@ class PersistentGoogleMapState extends State<PersistentGoogleMap> {
 
     if (points.isEmpty) return;
 
-    final southwestLat =
-        points.map((p) => p.latitude).reduce((a, b) => a < b ? a : b);
-    final southwestLng =
-        points.map((p) => p.longitude).reduce((a, b) => a < b ? a : b);
-    final northeastLat =
-        points.map((p) => p.latitude).reduce((a, b) => a > b ? a : b);
-    final northeastLng =
-        points.map((p) => p.longitude).reduce((a, b) => a > b ? a : b);
+    final southwestLat = points
+        .map((p) => p.latitude)
+        .reduce((a, b) => a < b ? a : b);
+    final southwestLng = points
+        .map((p) => p.longitude)
+        .reduce((a, b) => a < b ? a : b);
+    final northeastLat = points
+        .map((p) => p.latitude)
+        .reduce((a, b) => a > b ? a : b);
+    final northeastLng = points
+        .map((p) => p.longitude)
+        .reduce((a, b) => a > b ? a : b);
 
     bounds = LatLngBounds(
       southwest: LatLng(southwestLat, southwestLng),
@@ -2168,7 +2269,7 @@ class ParcelInfoWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title
-           Text(
+          Text(
             "Parcel Details".translate(context),
             style: heading2Grey1(context).copyWith(
               fontSize: 13,
@@ -2183,10 +2284,16 @@ class ParcelInfoWidget extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                  child: _infoCard("Item", name, Icons.inventory_2_outlined)),
+                child: _infoCard("Item", name, Icons.inventory_2_outlined),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                  child: _infoCard("Weight", "$weight ${"kg".translate(context)}", Icons.scale_outlined)),
+                child: _infoCard(
+                  "Weight",
+                  "$weight ${"kg".translate(context)}",
+                  Icons.scale_outlined,
+                ),
+              ),
             ],
           ),
 
@@ -2195,12 +2302,16 @@ class ParcelInfoWidget extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                  child: _infoCard(
-                      "Receiver", receiverName, Icons.person_outline)),
+                child: _infoCard(
+                  "Receiver",
+                  receiverName,
+                  Icons.person_outline,
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                  child:
-                      _infoCard("Phone", receiverPhone, Icons.call_outlined)),
+                child: _infoCard("Phone", receiverPhone, Icons.call_outlined),
+              ),
             ],
           ),
 
@@ -2208,10 +2319,9 @@ class ParcelInfoWidget extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               "Instruction: $pickupInstructions",
-              style:   heading3Grey1(context).copyWith(
-                fontSize: 11,
-                color: Colors.brown,
-              ),
+              style: heading3Grey1(
+                context,
+              ).copyWith(fontSize: 11, color: Colors.brown),
             ),
           ],
         ],
@@ -2237,18 +2347,16 @@ class ParcelInfoWidget extends StatelessWidget {
               children: [
                 Text(
                   title.translate(navigatorKey.currentContext!),
-                  style: heading3Grey1(navigatorKey.currentContext!).copyWith(
-                    fontSize: 10,
-                    color: Colors.grey,
-                  ),
+                  style: heading3Grey1(
+                    navigatorKey.currentContext!,
+                  ).copyWith(fontSize: 10, color: Colors.grey),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style:   heading3Grey1(navigatorKey.currentContext!).copyWith(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: heading3Grey1(
+                    navigatorKey.currentContext!,
+                  ).copyWith(fontSize: 12, fontWeight: FontWeight.w600),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -2259,7 +2367,3 @@ class ParcelInfoWidget extends StatelessWidget {
     );
   }
 }
-
-
-
-

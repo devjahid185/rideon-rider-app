@@ -14,6 +14,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import 'core/extensions/helper/push_notifications.dart';
+import 'core/services/ride_audio_recorder_service.dart';
 import 'core/utils/theme/project_color.dart';
 
 void main() async {
@@ -25,17 +26,14 @@ void main() async {
   await initializeNotifications();
   await setupPushNotifications();
   await _ensureLocationServiceEnabledOnStart();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
-   FlutterError.onError = (FlutterErrorDetails details) {};
+  await RideAudioRecorderService.instance.requestMicrophonePermissionOnStart();
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  FlutterError.onError = (FlutterErrorDetails details) {};
   runApp(
     MultiBlocProvider(
       providers: [
         ...RegisterCubits().providers,
-        ChangeNotifierProvider(
-          create: (_) => ColorNotifires(),
-        ),
+        ChangeNotifierProvider(create: (_) => ColorNotifires()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),
@@ -44,57 +42,58 @@ void main() async {
         builder: (context, child) {
           context.read<LanguageCubit>().loadCurrentLanguage();
           return BlocBuilder<LanguageCubit, LanguageState>(
-              builder: (context, state) {
-            if (state is LanguageLoader) {
-              appLocale = Locale(state.language ?? "en");
-            }
-            return MaterialApp(
-              navigatorKey: navigatorKey,
-              builder: BotToastInit(),  
-              theme: ThemeData(
-                fontFamily: 'Gilroy Regular',
-                colorScheme: ColorScheme.fromSeed(
-                  seedColor: themeColor,
-                  primary: themeColor,
-                  secondary: themeColor2,
-                ),
-                appBarTheme: const AppBarTheme(
-                  foregroundColor: Colors.white,
-                  iconTheme: IconThemeData(color: Colors.white),
-                  titleTextStyle: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Gilroy Regular',
+            builder: (context, state) {
+              if (state is LanguageLoader) {
+                appLocale = Locale(state.language ?? "en");
+              }
+              return MaterialApp(
+                navigatorKey: navigatorKey,
+                builder: BotToastInit(),
+                theme: ThemeData(
+                  fontFamily: 'Gilroy Regular',
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: themeColor,
+                    primary: themeColor,
+                    secondary: themeColor2,
                   ),
-                ),
-                elevatedButtonTheme: ElevatedButtonThemeData(
-                  style: ElevatedButton.styleFrom(
+                  appBarTheme: const AppBarTheme(
                     foregroundColor: Colors.white,
-                    iconColor: Colors.white,
+                    iconTheme: IconThemeData(color: Colors.white),
+                    titleTextStyle: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Gilroy Regular',
+                    ),
+                  ),
+                  elevatedButtonTheme: ElevatedButtonThemeData(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      iconColor: Colors.white,
+                    ),
+                  ),
+                  filledButtonTheme: FilledButtonThemeData(
+                    style: FilledButton.styleFrom(
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ),
-                filledButtonTheme: FilledButtonThemeData(
-                  style: FilledButton.styleFrom(
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              ),
-              supportedLocales: const [
-                Locale('en', 'US'),
-                Locale('ar', 'AR'),
-              ],
-              locale: appLocale,
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              debugShowCheckedModeBanner: false,
-              home: const InitialScreen(),
-            );
-          });
+                supportedLocales: const [
+                  Locale('en', 'US'),
+                  Locale('ar', 'AR'),
+                ],
+                locale: appLocale,
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                debugShowCheckedModeBanner: false,
+                home: const InitialScreen(),
+              );
+            },
+          );
         },
       ),
     ),

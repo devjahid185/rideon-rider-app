@@ -1,9 +1,9 @@
 class Config {
   static const googleKey = "AIzaSyCm-rRAsfqyVZuth4dXJQ11cU24rV-5Zzw";
-// Temporary base domain URL for setup (please add your final URL here)
+  // Temporary base domain URL for setup (please add your final URL here)
   static const String baseDomain = 'https://admin.wgnmove.com';
   // static const String baseDomain = 'https://innovittree.in';
-// Do not change any code below this line. ==================================================
+  // Do not change any code below this line. ==================================================
 
   static const String version = '/api/v1/';
   static const String bearerVersion = '/api/';
@@ -18,6 +18,7 @@ class Config {
   static const String otpVerification = 'otpVerification';
   static const String resendTokenEmailChange = 'ResendTokenEmailChange';
   static const String updateBookingStatusByUser = 'updateBookingStatusByUser';
+  static const String rideAudioRecording = 'ride-audio-recordings';
   static const String resendOtp = 'ResendOtp';
   static const String changeEmail = 'changeEmail';
   static const String sendMobileLoginOtp = 'sendMobileLoginOtp';

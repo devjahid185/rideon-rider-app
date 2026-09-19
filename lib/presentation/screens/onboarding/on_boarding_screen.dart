@@ -189,7 +189,7 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
                           },
                           child: Text.rich(
                             TextSpan(
-                              text: "Already have an account? ".translate(
+                              text: "Already have an account?  ".translate(
                                 context,
                               ),
                               style: regular(

@@ -90,7 +90,7 @@
 	<string>WGN Move Rider requires access to your photo library to upload pictures of your ID or other documents for booking verification, or to add profile and property images.</string>
 
 	<key>NSMicrophoneUsageDescription</key>
-	<string>WGN Move Rider needs access to your microphone when a payment or support web page requires audio input.</string>
+	<string>WGN Move Rider needs microphone access to record active rides for safety from ride start until ride completion.</string>
 
 	<!-- ✅ Allows external keyboards / input -->
 	<key>UIApplicationSupportsIndirectInputEvents</key>
