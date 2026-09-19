@@ -107,7 +107,9 @@ Future<dynamic> httpPost(path, data, {required BuildContext context}) async {
           };
         }
       } else {
-        return {"error": "Token regeneration failed"};
+        return responseData is Map
+            ? responseData
+            : {"error": "Request failed. Please try again."};
       }
     }
 
@@ -285,7 +287,9 @@ Future<dynamic> httpGet(
           };
         }
       } else {
-        return {"error": "Token regeneration failed"};
+        return decodedBody is Map
+            ? decodedBody
+            : {"error": "Request failed. Please try again."};
       }
     } else {
       responsegetData = decodedBody;
