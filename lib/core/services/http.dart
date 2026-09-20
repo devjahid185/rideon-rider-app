@@ -36,6 +36,32 @@ void _logHttpFailure(
   }
 }
 
+Future<void> _repairStoredUserToken(String newUserToken) async {
+  if (newUserToken.isEmpty || newUserToken == token) {
+    return;
+  }
+
+  token = newUserToken;
+
+  final rawUserData = box.get("UserData");
+  if (rawUserData is! String || rawUserData.isEmpty) {
+    return;
+  }
+
+  try {
+    final decoded = json.decode(rawUserData);
+    if (decoded is Map<String, dynamic> && decoded["data"] is Map) {
+      final data = Map<String, dynamic>.from(decoded["data"] as Map);
+      data["token"] = newUserToken;
+      decoded["data"] = data;
+      await box.put("UserData", jsonEncode(decoded));
+      debugPrint("[HTTP][TOKEN] repaired stored app user token");
+    }
+  } catch (e) {
+    debugPrint("[HTTP][TOKEN] failed to repair stored app user token: $e");
+  }
+}
+
 Future<void> _ensureBearerMatchesCurrentUser() async {
   final bearerUserToken = (box.get("bearerUserToken") ?? "").toString();
   if (bearerToken.isNotEmpty && bearerUserToken != token) {
@@ -375,6 +401,13 @@ Future<String?> generateToken() async {
     Map<String, dynamic> body = {
       "secret": Config.secretKey,
       "user_token": token,
+      if (loginModel?.data?.id != null) "user_id": loginModel!.data!.id,
+      if ((loginModel?.data?.email ?? "").toString().isNotEmpty)
+        "email": loginModel!.data!.email,
+      if ((loginModel?.data?.phone ?? "").toString().isNotEmpty)
+        "phone": loginModel!.data!.phone,
+      if ((loginModel?.data?.phoneCountry ?? "").toString().isNotEmpty)
+        "phone_country": loginModel!.data!.phoneCountry,
     };
 
     var response = await http.post(
@@ -392,19 +425,38 @@ Future<String?> generateToken() async {
       response = await http.post(
         Uri.parse(url),
         headers: headers,
-        body: jsonEncode({"secret": Config.secretKey}),
+        body: jsonEncode({
+          "secret": Config.secretKey,
+          if (loginModel?.data?.id != null) "user_id": loginModel!.data!.id,
+          if ((loginModel?.data?.email ?? "").toString().isNotEmpty)
+            "email": loginModel!.data!.email,
+          if ((loginModel?.data?.phone ?? "").toString().isNotEmpty)
+            "phone": loginModel!.data!.phone,
+          if ((loginModel?.data?.phoneCountry ?? "").toString().isNotEmpty)
+            "phone_country": loginModel!.data!.phoneCountry,
+        }),
       );
       data = json.decode(response.body);
       bearerUserToken = "";
     }
 
     if (response.statusCode == 200) {
-      final token = data['data']["token"].toString();
-      bearerToken = token;
+      final responsePayload = data['data'] is Map ? data['data'] as Map : {};
+      final repairedUserToken = (responsePayload["app_user_token"] ?? "")
+          .toString();
+      if (repairedUserToken.isNotEmpty) {
+        await _repairStoredUserToken(repairedUserToken);
+        bearerUserToken = repairedUserToken;
+      } else if (responsePayload["user_token_valid"] == false) {
+        bearerUserToken = "";
+      }
 
-      box.put("bearerToken", token);
+      final generatedBearerToken = responsePayload["token"].toString();
+      bearerToken = generatedBearerToken;
+
+      box.put("bearerToken", generatedBearerToken);
       box.put("bearerUserToken", bearerUserToken);
-      completer.complete(token);
+      completer.complete(generatedBearerToken);
     } else if (response.statusCode == 419) {
       completer.complete(null);
     } else {
