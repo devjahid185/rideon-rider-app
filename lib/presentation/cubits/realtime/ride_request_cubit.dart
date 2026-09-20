@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:ride_on/core/services/data_store.dart';
 import 'package:ride_on/core/extensions/workspace.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -105,78 +105,79 @@ class RideRequestState extends Equatable {
     double? acceptedDriverLng,
   }) {
     return RideRequestState(
-        pickupLat: pickupLat ?? this.pickupLat,
-        pickupLng: pickupLng ?? this.pickupLng,
-        dropoffLng: dropoffLng ?? this.dropoffLng,
-        dropoffLat: dropoffLat ?? this.dropoffLat,
-        itemTypeId: itemTypeId ?? this.itemTypeId,
-        pickupAddress: pickupAddress ?? this.pickupAddress,
-        dropOffAddress: dropOffAddress ?? this.dropOffAddress,
-        farePrice: farePrice ?? this.farePrice,
-        distanceInKm: distanceInKm ?? this.distanceInKm,
-        nearbyDrivers: nearbyDrivers ?? this.nearbyDrivers,
-        vehicleMake: vehicleMake ?? this.vehicleMake,
-        vehicleModel: vehicleModel ?? this.vehicleModel,
-        acceptedDriverVehicleMake:
-            acceptedDriverVehicleMake ?? this.acceptedDriverVehicleMake,
-        acceptedDriverVehicleModel:
-            acceptedDriverVehicleModel ?? this.acceptedDriverVehicleModel,
-        accepteDriverPhoneNumber:
-            accepteDriverPhoneNumber ?? this.accepteDriverPhoneNumber,
-        acceptedDriverPhoneCountryCode: acceptedDriverPhoneCountryCode ??
-            this.acceptedDriverPhoneCountryCode,
-        driverRating: driverRating ?? this.driverRating,
-        acceptedDriverImageUrl:
-            acceptedDriverImageUrl ?? this.acceptedDriverImageUrl,
-        acceptedDriverName: acceptedDriverName ?? this.acceptedDriverName,
-        acceptedDriverVechileName:
-            acceptedDriverVechileName ?? this.acceptedDriverVechileName,
-        acceptedDriverVechileNumber:
-            acceptedDriverVechileNumber ?? this.acceptedDriverVechileNumber,
-        itemId: itemId ?? this.itemId,
-        rideMessage: rideMessage ?? this.rideMessage,
-        selectedDriverId: selectedDriverId ?? this.selectedDriverId,
-        fireStoreToken: fireStoreToken ?? this.fireStoreToken,
-        isSubmitting: isSubmitting ?? this.isSubmitting,
-        progressIndicator: progressIndicator ?? this.progressIndicator,
-        rideId: rideId ?? this.rideId,
-        acceptedDriverLat: acceptedDriverLat ?? this.acceptedDriverLat,
-        acceptedDriverLng: acceptedDriverLng ?? this.acceptedDriverLng);
+      pickupLat: pickupLat ?? this.pickupLat,
+      pickupLng: pickupLng ?? this.pickupLng,
+      dropoffLng: dropoffLng ?? this.dropoffLng,
+      dropoffLat: dropoffLat ?? this.dropoffLat,
+      itemTypeId: itemTypeId ?? this.itemTypeId,
+      pickupAddress: pickupAddress ?? this.pickupAddress,
+      dropOffAddress: dropOffAddress ?? this.dropOffAddress,
+      farePrice: farePrice ?? this.farePrice,
+      distanceInKm: distanceInKm ?? this.distanceInKm,
+      nearbyDrivers: nearbyDrivers ?? this.nearbyDrivers,
+      vehicleMake: vehicleMake ?? this.vehicleMake,
+      vehicleModel: vehicleModel ?? this.vehicleModel,
+      acceptedDriverVehicleMake:
+          acceptedDriverVehicleMake ?? this.acceptedDriverVehicleMake,
+      acceptedDriverVehicleModel:
+          acceptedDriverVehicleModel ?? this.acceptedDriverVehicleModel,
+      accepteDriverPhoneNumber:
+          accepteDriverPhoneNumber ?? this.accepteDriverPhoneNumber,
+      acceptedDriverPhoneCountryCode:
+          acceptedDriverPhoneCountryCode ?? this.acceptedDriverPhoneCountryCode,
+      driverRating: driverRating ?? this.driverRating,
+      acceptedDriverImageUrl:
+          acceptedDriverImageUrl ?? this.acceptedDriverImageUrl,
+      acceptedDriverName: acceptedDriverName ?? this.acceptedDriverName,
+      acceptedDriverVechileName:
+          acceptedDriverVechileName ?? this.acceptedDriverVechileName,
+      acceptedDriverVechileNumber:
+          acceptedDriverVechileNumber ?? this.acceptedDriverVechileNumber,
+      itemId: itemId ?? this.itemId,
+      rideMessage: rideMessage ?? this.rideMessage,
+      selectedDriverId: selectedDriverId ?? this.selectedDriverId,
+      fireStoreToken: fireStoreToken ?? this.fireStoreToken,
+      isSubmitting: isSubmitting ?? this.isSubmitting,
+      progressIndicator: progressIndicator ?? this.progressIndicator,
+      rideId: rideId ?? this.rideId,
+      acceptedDriverLat: acceptedDriverLat ?? this.acceptedDriverLat,
+      acceptedDriverLng: acceptedDriverLng ?? this.acceptedDriverLng,
+    );
   }
 
   @override
   List<Object?> get props => [
-        pickupLat,
-        pickupLng,
-        dropoffLng,
-        dropoffLat,
-        itemTypeId,
-        pickupAddress,
-        dropOffAddress,
-        farePrice,
-        distanceInKm,
-        nearbyDrivers,
-        vehicleMake,
-        vehicleModel,
-        acceptedDriverVehicleMake,
-        acceptedDriverVehicleModel,
-        accepteDriverPhoneNumber,
-        acceptedDriverPhoneCountryCode,
-        driverRating,
-        acceptedDriverImageUrl,
-        acceptedDriverVechileName,
-        acceptedDriverVechileNumber,
-        acceptedDriverName,
-        itemId,
-        rideId,
-        isSubmitting,
-        progressIndicator,
-        acceptedDriverLat,
-        acceptedDriverLng,
-        selectedDriverId,
-        fireStoreToken,
-        rideMessage
-      ];
+    pickupLat,
+    pickupLng,
+    dropoffLng,
+    dropoffLat,
+    itemTypeId,
+    pickupAddress,
+    dropOffAddress,
+    farePrice,
+    distanceInKm,
+    nearbyDrivers,
+    vehicleMake,
+    vehicleModel,
+    acceptedDriverVehicleMake,
+    acceptedDriverVehicleModel,
+    accepteDriverPhoneNumber,
+    acceptedDriverPhoneCountryCode,
+    driverRating,
+    acceptedDriverImageUrl,
+    acceptedDriverVechileName,
+    acceptedDriverVechileNumber,
+    acceptedDriverName,
+    itemId,
+    rideId,
+    isSubmitting,
+    progressIndicator,
+    acceptedDriverLat,
+    acceptedDriverLng,
+    selectedDriverId,
+    fireStoreToken,
+    rideMessage,
+  ];
 }
 
 class RideRequestInitial extends RideRequestState {}
@@ -254,21 +255,22 @@ class RideRequestCubit extends Cubit<RideRequestState> {
 
     if (checkRestart == false) {
       createRealTimeInstance(
-          dropoffAddress: dropoffAddress,
-          dropoffLat: dropoffLat,
-          dropoffLng: dropoffLng,
-          pickupAddress: pickupAddress,
-          pickupLat: pickupLat,
-          pickupLng: pickupLng,
-          userId: userId,
-          routeDistance: routeDistance,
-          userPhoneNumber: userPhoneNumber,
-          rideId: rideId,
-          userName: userName,
-          userImageUrl: userImageUrl,
-          travelCharges: travelCharges,
-          totalTime: totalTime,
-          routeStatus: 'pending');
+        dropoffAddress: dropoffAddress,
+        dropoffLat: dropoffLat,
+        dropoffLng: dropoffLng,
+        pickupAddress: pickupAddress,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        userId: userId,
+        routeDistance: routeDistance,
+        userPhoneNumber: userPhoneNumber,
+        rideId: rideId,
+        userName: userName,
+        userImageUrl: userImageUrl,
+        travelCharges: travelCharges,
+        totalTime: totalTime,
+        routeStatus: 'pending',
+      );
     }
 
     final rideRequestData = {
@@ -291,10 +293,10 @@ class RideRequestCubit extends Cubit<RideRequestState> {
       },
       'travelCharges': travelCharges,
       'status': 'pending',
-      "playerId": "${oneSignalPlayerId??""}",
+      "playerId": "${oneSignalPlayerId ?? ""}",
       'travelDistance': routeDistance,
       "travelTime": totalTime.toString(),
-      "requestTime": DateTime.now()
+      "requestTime": DateTime.now(),
     };
     box.put("rideId", rideId);
     box.put('ride_data', {
@@ -321,8 +323,8 @@ class RideRequestCubit extends Cubit<RideRequestState> {
       'dropLat': dropoffLat,
       'pickLng': pickupLng,
       'dropLng': dropoffLng,
-      'playerId': '${oneSignalPlayerId??""}',
-      "itemTypeId": ""
+      'playerId': '${oneSignalPlayerId ?? ""}',
+      "itemTypeId": "",
     });
 
     await box.put('activeRide', rideRequestData);
@@ -335,7 +337,8 @@ class RideRequestCubit extends Cubit<RideRequestState> {
 
       if (fireStoreToken.isEmpty) {
         debugPrint(
-            '[RideDispatchDebug] skipped driver due to empty firestore id | driver=$driver');
+          '[RideDispatchDebug] skipped driver due to empty firestore id | driver=$driver',
+        );
         continue;
       }
 
@@ -352,19 +355,23 @@ class RideRequestCubit extends Cubit<RideRequestState> {
         driverIds.add(fireStoreToken);
       } catch (e) {
         debugPrint(
-            '[RideDispatchDebug] failed to write ride_request | driverDoc=$fireStoreToken | error=$e');
+          '[RideDispatchDebug] failed to write ride_request | driverDoc=$fireStoreToken | error=$e',
+        );
       }
     }
     debugPrint(
-        '[RideDispatchDebug] ride request dispatched | rideId=$rideId | nearby=${nearbyDrivers.length} | written=${driverIds.length}');
+      '[RideDispatchDebug] ride request dispatched | rideId=$rideId | nearby=${nearbyDrivers.length} | written=${driverIds.length}',
+    );
     if (driverIds.isEmpty) {
-      emit(state.copyWith(
-        rideId: rideId,
-        isSubmitting: false,
-        progressIndicator: false,
-        rideMessage:
-            "No nearby drivers available right now. Please try again in a moment.",
-      ));
+      emit(
+        state.copyWith(
+          rideId: rideId,
+          isSubmitting: false,
+          progressIndicator: false,
+          rideMessage:
+              "No nearby drivers available right now. Please try again in a moment.",
+        ),
+      );
       return;
     }
     box.put("driverIds", driverIds);
@@ -406,11 +413,13 @@ class RideRequestCubit extends Cubit<RideRequestState> {
     bool hasAccepted = false;
     final List<StreamSubscription> driverListeners = [];
 
-    emit(state.copyWith(
-      rideId: rideId,
-      isSubmitting: false,
-      progressIndicator: true,
-    ));
+    emit(
+      state.copyWith(
+        rideId: rideId,
+        isSubmitting: false,
+        progressIndicator: true,
+      ),
+    );
 
     Future.delayed(Duration(seconds: durationForSearch), () async {
       if (!hasAccepted &&
@@ -421,10 +430,7 @@ class RideRequestCubit extends Cubit<RideRequestState> {
             await FirebaseFirestore.instance
                 .collection('drivers')
                 .doc(driverId)
-                .update({
-              'ride_request': {},
-              'rideStatus': 'available',
-            });
+                .update({'ride_request': {}, 'rideStatus': 'available'});
           } catch (_) {}
         }
 
@@ -432,9 +438,7 @@ class RideRequestCubit extends Cubit<RideRequestState> {
           await sub.cancel();
         }
 
-        emit(state.copyWith(
-          progressIndicator: false,
-        ));
+        emit(state.copyWith(progressIndicator: false));
       }
     });
 
@@ -443,96 +447,107 @@ class RideRequestCubit extends Cubit<RideRequestState> {
           .collection('drivers')
           .doc(driverFireStoreId)
           .snapshots()
-          .listen((snapshot) async {
-        if (!snapshot.exists || snapshot.data() == null || hasAccepted) return;
+          .listen(
+            (snapshot) async {
+              if (!snapshot.exists || snapshot.data() == null || hasAccepted) {
+                return;
+              }
 
-        final data = snapshot.data()!;
-        final rideRequestRaw = data['ride_request'];
-        final Map<String, dynamic>? rideRequest =
-            rideRequestRaw is Map<String, dynamic>
-                ? rideRequestRaw
-                : (rideRequestRaw is Map
-                    ? Map<String, dynamic>.from(rideRequestRaw)
-                    : null);
+              final data = snapshot.data()!;
+              final rideRequestRaw = data['ride_request'];
+              final Map<String, dynamic>? rideRequest =
+                  rideRequestRaw is Map<String, dynamic>
+                  ? rideRequestRaw
+                  : (rideRequestRaw is Map
+                        ? Map<String, dynamic>.from(rideRequestRaw)
+                        : null);
 
-        if (rideRequest == null) return;
+              if (rideRequest == null) return;
 
-        final remoteRideId = rideRequest['rideId']?.toString() ?? '';
-        final remoteStatus =
-            (rideRequest['status'] ?? '').toString().trim().toLowerCase();
+              final remoteRideId = rideRequest['rideId']?.toString() ?? '';
+              final remoteStatus = (rideRequest['status'] ?? '')
+                  .toString()
+                  .trim()
+                  .toLowerCase();
 
-        if (remoteRideId == rideId && remoteStatus == 'accepted') {
-          debugPrint(
-              '[RideDispatchDebug] accepted detected | rideId=$rideId | driverDoc=$driverFireStoreId');
-          hasAccepted = true;
+              if (remoteRideId == rideId && remoteStatus == 'accepted') {
+                debugPrint(
+                  '[RideDispatchDebug] accepted detected | rideId=$rideId | driverDoc=$driverFireStoreId',
+                );
+                hasAccepted = true;
 
-          for (final sub in driverListeners) {
-            await sub.cancel();
-          }
+                for (final sub in driverListeners) {
+                  await sub.cancel();
+                }
 
-          try {
-            await FirebaseFirestore.instance
-                .collection('drivers')
-                .doc(driverFireStoreId)
-                .update({'rideStatus': 'busy'});
-          } catch (_) {}
+                try {
+                  await FirebaseFirestore.instance
+                      .collection('drivers')
+                      .doc(driverFireStoreId)
+                      .update({'rideStatus': 'busy'});
+                } catch (_) {}
 
-          final customer =
-              rideRequestData['customer'] as Map<dynamic, dynamic>? ?? {};
+                final customer =
+                    rideRequestData['customer'] as Map<dynamic, dynamic>? ?? {};
 
-          try {
-            await _createAcceptedRideRequestInRealTime(
-              pickupLat: pickupLat,
-              pickupLng: pickupLng,
-              dropoffLat: dropoffLat,
-              dropoffLng: dropoffLng,
-              fireStoreToken: driverFireStoreId,
-              driverIds: driverIds,
-              context: context,
-              driverId: (data['driverId'] ??
-                      data['api_user_id'] ??
-                      data['userId'] ??
-                      '')
-                  .toString(),
-              rideId: rideId,
-              nearbyDrivers: nearbyDrivers,
-              userId: rideRequestData['userId'] ?? '',
-              userName: customer['userName'] ?? '',
-              pickupAddress: pickupAddress,
-              dropoffAddress: dropoffAddress,
-              userPhoneNumber: customer['userPhone'] ?? '',
-              userImageUrl: customer['userPhoto'] ?? '',
-              travelCharges: rideRequestData['travelCharges'] ?? '',
-              routeStatus: 'accepted',
-              routeDistance: rideRequestData['travelDistance'] ?? '',
-            );
-          } catch (e) {
-            hasAccepted = false;
-            debugPrint(
-                '[RideDispatchDebug] failed after accept detection | rideId=$rideId | driverDoc=$driverFireStoreId | error=$e');
-            return;
-          }
+                try {
+                  await _createAcceptedRideRequestInRealTime(
+                    pickupLat: pickupLat,
+                    pickupLng: pickupLng,
+                    dropoffLat: dropoffLat,
+                    dropoffLng: dropoffLng,
+                    fireStoreToken: driverFireStoreId,
+                    driverIds: driverIds,
+                    context: context,
+                    driverId:
+                        (data['driverId'] ??
+                                data['api_user_id'] ??
+                                data['userId'] ??
+                                '')
+                            .toString(),
+                    rideId: rideId,
+                    nearbyDrivers: nearbyDrivers,
+                    userId: rideRequestData['userId'] ?? '',
+                    userName: customer['userName'] ?? '',
+                    pickupAddress: pickupAddress,
+                    dropoffAddress: dropoffAddress,
+                    userPhoneNumber: customer['userPhone'] ?? '',
+                    userImageUrl: customer['userPhoto'] ?? '',
+                    travelCharges: rideRequestData['travelCharges'] ?? '',
+                    routeStatus: 'accepted',
+                    routeDistance: rideRequestData['travelDistance'] ?? '',
+                  );
+                } catch (e) {
+                  hasAccepted = false;
+                  debugPrint(
+                    '[RideDispatchDebug] failed after accept detection | rideId=$rideId | driverDoc=$driverFireStoreId | error=$e',
+                  );
+                  return;
+                }
 
-          for (final otherDriverId in driverIds) {
-            if (otherDriverId != driverFireStoreId) {
-              try {
-                await FirebaseFirestore.instance
-                    .collection('drivers')
-                    .doc(otherDriverId)
-                    .update({
-                  'ride_request': {},
-                  'rideStatus': 'available',
-                });
-              } catch (_) {}
-            }
-          }
+                for (final otherDriverId in driverIds) {
+                  if (otherDriverId != driverFireStoreId) {
+                    try {
+                      await FirebaseFirestore.instance
+                          .collection('drivers')
+                          .doc(otherDriverId)
+                          .update({
+                            'ride_request': {},
+                            'rideStatus': 'available',
+                          });
+                    } catch (_) {}
+                  }
+                }
 
-          emit(state.copyWith(progressIndicator: false));
-        }
-      }, onError: (e) {
-        debugPrint(
-            '[RideDispatchDebug] driver listener error | driverDoc=$driverFireStoreId | error=$e');
-      });
+                emit(state.copyWith(progressIndicator: false));
+              }
+            },
+            onError: (e) {
+              debugPrint(
+                '[RideDispatchDebug] driver listener error | driverDoc=$driverFireStoreId | error=$e',
+              );
+            },
+          );
 
       driverListeners.add(subscription);
     }
@@ -559,8 +574,9 @@ class RideRequestCubit extends Cubit<RideRequestState> {
     required dynamic routeStatus,
     required dynamic routeDistance,
   }) async {
-    final rideRequestRef =
-        FirebaseDatabase.instance.ref().child("ride_requests");
+    final rideRequestRef = FirebaseDatabase.instance.ref().child(
+      "ride_requests",
+    );
 
     dynamic driverName = '';
     dynamic driverPhone = '';
@@ -585,24 +601,34 @@ class RideRequestCubit extends Cubit<RideRequestState> {
         final data = snapshot.data();
         if (data != null) {
           if (driverId.trim().isEmpty) {
-            driverId = (data['driverId'] ?? data['api_user_id'] ?? data['userId'] ?? '')
-                .toString();
+            driverId =
+                (data['driverId'] ??
+                        data['api_user_id'] ??
+                        data['userId'] ??
+                        '')
+                    .toString();
           }
-          driverName = data['driverName'] ?? '';
-          driverPhone = "${data['driverNumber']} ";
-          driverPhoto = data['driverImageUrl'] ?? '';
+          driverName = (data['driverName'] ?? '').toString();
+          driverPhone = "${(data['driverNumber'] ?? '').toString()} ";
+          driverPhoto = (data['driverImageUrl'] ?? '').toString();
           driverRating = data['driverRating']?.toString() ?? '';
-          itemId = data['itemId'] ?? '';
+          itemId = (data['itemId'] ?? '').toString();
 
-          vehicleNumber = data['vehicleNumber'] ?? '';
-          itemTypeName = data['itemTypeName'] ?? '';
+          vehicleNumber = (data['vehicleNumber'] ?? '').toString();
+          itemTypeName = (data['itemTypeName'] ?? '').toString();
 
-          vehicleMake = data['vehicleMake'].toString();
-          vehicleModel = data['vehicleModel'].toString();
-          itemTypeId = data["itemTypeId"] ?? "";
+          vehicleMake = (data['vehicleMake'] ?? '').toString();
+          vehicleModel = (data['vehicleModel'] ?? '').toString();
+          itemTypeId = (data["itemTypeId"] ?? "").toString();
 
-          final geo = data['geo'] as Map<String, dynamic>?;
-          final GeoPoint? geoPoint = geo?['geopoint'];
+          final geoRaw = data['geo'];
+          final Map<String, dynamic>? geo = geoRaw is Map<String, dynamic>
+              ? geoRaw
+              : (geoRaw is Map ? Map<String, dynamic>.from(geoRaw) : null);
+          final geoPointRaw = geo?['geopoint'];
+          final GeoPoint? geoPoint = geoPointRaw is GeoPoint
+              ? geoPointRaw
+              : null;
 
           if (geoPoint != null) {
             driverLat = geoPoint.latitude;
@@ -637,26 +663,31 @@ class RideRequestCubit extends Cubit<RideRequestState> {
       };
 
       await rideRequestRef.child(rideId).update(rideData);
+      debugPrint(
+        '[RideDispatchDebug] accepted ride synced to realtime | rideId=$rideId | driverId=$driverId | driverName=$driverName | itemId=$itemId',
+      );
 
-      emit(state.copyWith(
-        pickupAddress: "$pickupAddress",
-        dropOffAddress: "$dropoffAddress",
-        isSubmitting: true,
-        progressIndicator: false,
-        driverRating: "$driverRating",
-        vehicleMake: vehicleMake.toString(),
-        vehicleModel: vehicleModel.toString(),
-        accepteDriverPhoneNumber: driverPhone ?? "",
-        acceptedDriverImageUrl: driverPhoto,
-        acceptedDriverName: driverName ?? "",
-        acceptedDriverVechileName: '$vehicleMake $vehicleModel',
-        acceptedDriverVechileNumber: "$vehicleNumber",
-        itemId: itemId.toString(),
-        rideId: rideId,
-        selectedDriverId: driverId,
-        acceptedDriverLat: driverLat,
-        acceptedDriverLng: driverLng,
-      ));
+      emit(
+        state.copyWith(
+          pickupAddress: "$pickupAddress",
+          dropOffAddress: "$dropoffAddress",
+          isSubmitting: true,
+          progressIndicator: false,
+          driverRating: "$driverRating",
+          vehicleMake: vehicleMake.toString(),
+          vehicleModel: vehicleModel.toString(),
+          accepteDriverPhoneNumber: driverPhone ?? "",
+          acceptedDriverImageUrl: driverPhoto,
+          acceptedDriverName: driverName ?? "",
+          acceptedDriverVechileName: '$vehicleMake $vehicleModel',
+          acceptedDriverVechileNumber: "$vehicleNumber",
+          itemId: itemId.toString(),
+          rideId: rideId,
+          selectedDriverId: driverId,
+          acceptedDriverLat: driverLat,
+          acceptedDriverLng: driverLng,
+        ),
+      );
 
       box.put('ride_data', {
         'rideId': rideId,
@@ -675,16 +706,21 @@ class RideRequestCubit extends Cubit<RideRequestState> {
         'dropLat': dropoffLat,
         'pickLng': pickupLng,
         'dropLng': dropoffLng,
-        "itemTypeId": itemTypeId
+        "itemTypeId": itemTypeId,
       });
     } catch (e) {
-      emit(state.copyWith(
-        rideId: rideId,
-        isSubmitting: false,
-        progressIndicator: false,
-        rideMessage:
-            "No driver accepted the ride request. Please try again with another vehicle.",
-      ));
+      debugPrint(
+        '[RideDispatchDebug] accepted realtime sync failed | rideId=$rideId | driverDoc=$fireStoreToken | error=$e',
+      );
+      emit(
+        state.copyWith(
+          rideId: rideId,
+          isSubmitting: false,
+          progressIndicator: false,
+          rideMessage:
+              "No driver accepted the ride request. Please try again with another vehicle.",
+        ),
+      );
     }
   }
 
@@ -706,8 +742,9 @@ class RideRequestCubit extends Cubit<RideRequestState> {
     String? userImageUrl,
   }) async {
     try {
-      final rideRequestRef =
-          FirebaseDatabase.instance.ref().child("ride_requests");
+      final rideRequestRef = FirebaseDatabase.instance.ref().child(
+        "ride_requests",
+      );
       final Map<String, dynamic>? parcelData =
           box.get('current_parcel_data') as Map<String, dynamic>?;
       String name = "";
@@ -796,46 +833,48 @@ class RideRequestCubit extends Cubit<RideRequestState> {
     final rideData = box.get('ride_data');
 
     if (rideData != null) {
-      emit(state.copyWith(
-        rideId: rideData['rideId'],
-        itemId: rideData['itemId'].toString(),
-        selectedDriverId: rideData['selectedDriverId'],
-        acceptedDriverLat: rideData['acceptedDriverLat'],
-        acceptedDriverLng: rideData['acceptedDriverLng'],
-        acceptedDriverName: rideData['driverName'],
-        acceptedDriverImageUrl: rideData['driverImage'],
-        accepteDriverPhoneNumber: rideData['driverNumber'],
-        pickupLat: rideData['pickupLat'],
-        pickupLng: rideData['pickupLng'],
-        dropoffLat: rideData['dropoffLat'],
-        dropoffLng: rideData['dropoffLng'],
-        acceptedDriverVechileNumber: rideData['vehicleNumber'],
-        driverRating: rideData['rating'],
-        pickupAddress: rideData['pickAddress'],
-        dropOffAddress: rideData['dropAddress'],
-      ));
+      emit(
+        state.copyWith(
+          rideId: rideData['rideId'],
+          itemId: rideData['itemId'].toString(),
+          selectedDriverId: rideData['selectedDriverId'],
+          acceptedDriverLat: rideData['acceptedDriverLat'],
+          acceptedDriverLng: rideData['acceptedDriverLng'],
+          acceptedDriverName: rideData['driverName'],
+          acceptedDriverImageUrl: rideData['driverImage'],
+          accepteDriverPhoneNumber: rideData['driverNumber'],
+          pickupLat: rideData['pickupLat'],
+          pickupLng: rideData['pickupLng'],
+          dropoffLat: rideData['dropoffLat'],
+          dropoffLng: rideData['dropoffLng'],
+          acceptedDriverVechileNumber: rideData['vehicleNumber'],
+          driverRating: rideData['rating'],
+          pickupAddress: rideData['pickAddress'],
+          dropOffAddress: rideData['dropAddress'],
+        ),
+      );
     }
   }
 
   void resetState() {
     emit(RideRequestInitial());
-    emit(const RideRequestState(
-      farePrice: "",
-      nearbyDrivers: [],
-      distanceInKm: "",
-      acceptedDriverImageUrl: "",
-      acceptedDriverName: "",
-      acceptedDriverVechileName: "",
-      acceptedDriverVechileNumber: "",
-      acceptedDriverLat: 0.0,
-      acceptedDriverLng: 0.0,
-      rideId: "",
-      isSubmitting: false,
-      progressIndicator: false,
-      rideMessage: "",
-      selectedDriverId: "",
-    ));
+    emit(
+      const RideRequestState(
+        farePrice: "",
+        nearbyDrivers: [],
+        distanceInKm: "",
+        acceptedDriverImageUrl: "",
+        acceptedDriverName: "",
+        acceptedDriverVechileName: "",
+        acceptedDriverVechileNumber: "",
+        acceptedDriverLat: 0.0,
+        acceptedDriverLng: 0.0,
+        rideId: "",
+        isSubmitting: false,
+        progressIndicator: false,
+        rideMessage: "",
+        selectedDriverId: "",
+      ),
+    );
   }
 }
-
-

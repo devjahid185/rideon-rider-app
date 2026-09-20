@@ -760,6 +760,11 @@ class _SendRideRequestScreenState extends State<SendRideRequestScreen> {
     if (isSuccessFirst) return;
 
     isSuccessFirst = true;
+    if (mounted) {
+      setState(() {
+        rideStatus = "accepted";
+      });
+    }
     fetchTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       _fetchDriverLocationFromRealtimeDB(rideID);
     });
