@@ -14,6 +14,28 @@ String latitudeGlobal = '';
 String longitudeGlobal = '';
 bool shouldLogout = false;
 
+String _bodyPreview(String body, {int limit = 700}) {
+  return body.length > limit ? body.substring(0, limit) : body;
+}
+
+void _logHttpFailure(
+  String method,
+  String url,
+  int statusCode,
+  String body, {
+  Object? exception,
+}) {
+  debugPrint(
+    "[HTTP][$method][FAIL] url=$url | code=$statusCode | hasUserToken=${token.isNotEmpty} | userTokenLength=${token.length} | hasBearer=${bearerToken.isNotEmpty} | bearerUserToken=${(box.get("bearerUserToken") ?? "").toString().isNotEmpty}",
+  );
+  if (body.isNotEmpty) {
+    debugPrint("[HTTP][$method][FAIL] body=${_bodyPreview(body)}");
+  }
+  if (exception != null) {
+    debugPrint("[HTTP][$method][FAIL] exception=$exception");
+  }
+}
+
 Future<void> _ensureBearerMatchesCurrentUser() async {
   final bearerUserToken = (box.get("bearerUserToken") ?? "").toString();
   if (bearerToken.isNotEmpty && bearerUserToken != token) {
@@ -86,6 +108,16 @@ Future<dynamic> httpPost(path, data, {required BuildContext context}) async {
       );
     }
 
+    if (response.statusCode >= 400 ||
+        (responseData is Map &&
+            (responseData["status"] == 419 ||
+                responseData["ResponseCode"] == 419 ||
+                responseData["message"].toString().toLowerCase().contains(
+                  "token",
+                )))) {
+      _logHttpFailure("POST", url, response.statusCode, rawBody);
+    }
+
     if (response.statusCode == 498) {
       final newToken = await generateToken();
       if (newToken != null) {
@@ -115,6 +147,13 @@ Future<dynamic> httpPost(path, data, {required BuildContext context}) async {
 
     return responseData;
   } catch (err) {
+    _logHttpFailure(
+      "POST",
+      Config.baseUrl + path.toString(),
+      0,
+      "",
+      exception: err,
+    );
     if (path.toString() == Config.socialLogin) {
       debugPrint("[HTTP][POST] socialLogin exception: $err");
     }
@@ -173,6 +212,9 @@ Future<dynamic> httpMultipartPost(
     }
 
     final rawBody = const Utf8Codec().decode(response.bodyBytes);
+    if (response.statusCode >= 400 || rawBody.toLowerCase().contains("token")) {
+      _logHttpFailure("MULTIPART", url, response.statusCode, rawBody);
+    }
     try {
       return json.decode(rawBody);
     } catch (_) {
@@ -183,6 +225,7 @@ Future<dynamic> httpMultipartPost(
       };
     }
   } catch (err) {
+    _logHttpFailure("MULTIPART", Config.baseUrl + path, 0, "", exception: err);
     return {"error": "Something went wrong", "exception": err.toString()};
   }
 }
@@ -293,6 +336,7 @@ Future<dynamic> httpGet(
       }
     } else {
       responsegetData = decodedBody;
+      _logHttpFailure("GET", fullUrl, response.statusCode, rawBody);
       if (isSliderPath) {
         debugPrint(
           "[HTTP][GET] sliders response non-200 | code=${response.statusCode} | parsedStatus=${responsegetData is Map ? responsegetData['status'] : null}",
@@ -303,8 +347,10 @@ Future<dynamic> httpGet(
       // keep local auth data and let the next request regenerate the bearer.
     }
   } on TimeoutException {
+    _logHttpFailure("GET", Config.baseUrl + path, 0, "", exception: "timeout");
     responsegetData = {'error': "Request timed out. Please try again."};
   } catch (e) {
+    _logHttpFailure("GET", Config.baseUrl + path, 0, "", exception: e);
     if (path.toString() == Config.sliders) {
       debugPrint("[HTTP][GET] sliders exception: $e");
     }
@@ -338,6 +384,9 @@ Future<String?> generateToken() async {
     );
 
     var data = json.decode(response.body);
+    if (response.statusCode >= 400) {
+      _logHttpFailure("TOKEN", url, response.statusCode, response.body);
+    }
     var bearerUserToken = body["user_token"] ?? "";
     if (response.statusCode == 419 && token.isNotEmpty) {
       response = await http.post(
@@ -362,6 +411,13 @@ Future<String?> generateToken() async {
       completer.complete(null);
     }
   } catch (e) {
+    _logHttpFailure(
+      "TOKEN",
+      Config.baseUrlForBearer + Config.generateToken,
+      0,
+      "",
+      exception: e,
+    );
     completer.complete(null);
   } finally {
     _tokenFuture = null;
