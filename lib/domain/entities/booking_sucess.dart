@@ -35,9 +35,9 @@ class Data {
 
   Data.fromJson(Map<String, dynamic> json) {
     bookingId = json['booking_id'];
-    pickupOtp = json['pickup_otp'];
-    status = json['status'];
-    paymentUrl = json['payment_url'];
+    pickupOtp = json['pickup_otp']?.toString();
+    status = json['status']?.toString();
+    paymentUrl = json['payment_url']?.toString();
   }
 
   Map<String, dynamic> toJson() {

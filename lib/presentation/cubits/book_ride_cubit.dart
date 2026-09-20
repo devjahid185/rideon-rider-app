@@ -1,4 +1,4 @@
-﻿import 'package:ride_on/domain/entities/booking_sucess.dart';
+import 'package:ride_on/domain/entities/booking_sucess.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -107,67 +107,55 @@ class BookRideState extends Equatable {
 
   @override
   List<Object?> get props => [
-        userImageUrl,
-        itemId,
-        rideId,
-        acceptedDriverLat,
-        acceptedDriverLng,
-        userId,
-        progressIndicator,
-        selectedDriverId,
-        rideMessage,
-        pickupAddress,
-        pickupAddressLatitude,
-        pickupAddressLongitude,
-        dropoffAddress,
-        dropoffAddressLatitude,
-        dropoffAddressLongitude,
-        userName,
-        userPhoneNumber,
-        distance,
-        travelCharges,
-        routeStatus,
-        isSubmitting,
-      ];
+    userImageUrl,
+    itemId,
+    rideId,
+    acceptedDriverLat,
+    acceptedDriverLng,
+    userId,
+    progressIndicator,
+    selectedDriverId,
+    rideMessage,
+    pickupAddress,
+    pickupAddressLatitude,
+    pickupAddressLongitude,
+    dropoffAddress,
+    dropoffAddressLatitude,
+    dropoffAddressLongitude,
+    userName,
+    userPhoneNumber,
+    distance,
+    travelCharges,
+    routeStatus,
+    isSubmitting,
+  ];
 }
 
 class BookRideRealTimeDataBaseCubit extends Cubit<BookRideState> {
   BookRideRealTimeDataBaseCubit() : super(const BookRideState());
 
   void removeUserImageUrl() {
-    emit(state.copyWith(
-      userImageUrl: "",
-    ));
+    emit(state.copyWith(userImageUrl: ""));
   }
 
   void updateUserImageUrl({String? userImageUrl}) {
-    emit(state.copyWith(
-      userImageUrl: userImageUrl,
-    ));
+    emit(state.copyWith(userImageUrl: userImageUrl));
   }
 
   void removeItemId() {
-    emit(state.copyWith(
-      itemId: "",
-    ));
+    emit(state.copyWith(itemId: ""));
   }
 
   void updateItemId({String? itemId}) {
-    emit(state.copyWith(
-      itemId: itemId,
-    ));
+    emit(state.copyWith(itemId: itemId));
   }
 
   void removeRideId() {
-    emit(state.copyWith(
-      rideId: "",
-    ));
+    emit(state.copyWith(rideId: ""));
   }
 
   void updateRideId({String? rideId}) {
-    emit(state.copyWith(
-      rideId: rideId,
-    ));
+    emit(state.copyWith(rideId: rideId));
   }
 
   void removeRideMessage() {
@@ -178,50 +166,37 @@ class BookRideRealTimeDataBaseCubit extends Cubit<BookRideState> {
     emit(state.copyWith(progressIndicator: false));
   }
 
-  void updatePickupAddress({
-    String? pickupAddress,
-  }) {
-    emit(state.copyWith(
-      pickupAddress: pickupAddress,
-    ));
+  void updatePickupAddress({String? pickupAddress}) {
+    emit(state.copyWith(pickupAddress: pickupAddress));
   }
 
   void removePickupAddress() {
-    emit(state.copyWith(
-      pickupAddress: "",
-    ));
+    emit(state.copyWith(pickupAddress: ""));
   }
 
   void updatePickupLatAndLng({
     String? pickupAddressLatitude,
     String? pickupAddressLongitude,
   }) {
-    emit(state.copyWith(
-      pickupAddressLatitude: pickupAddressLatitude,
-      pickupAddressLongitude: pickupAddressLongitude,
-    ));
+    emit(
+      state.copyWith(
+        pickupAddressLatitude: pickupAddressLatitude,
+        pickupAddressLongitude: pickupAddressLongitude,
+      ),
+    );
   }
 
   void removePickupLatAndLng() {
-    emit(state.copyWith(
-      pickupAddressLatitude: "",
-      pickupAddressLongitude: "",
-    ));
+    emit(state.copyWith(pickupAddressLatitude: "", pickupAddressLongitude: ""));
   }
 
   // Update Addresses
-  void updateDropOffAddress({
-    String? dropoffAddress,
-  }) {
-    emit(state.copyWith(
-      dropoffAddress: dropoffAddress,
-    ));
+  void updateDropOffAddress({String? dropoffAddress}) {
+    emit(state.copyWith(dropoffAddress: dropoffAddress));
   }
 
   void removeDropOffAddress() {
-    emit(state.copyWith(
-      dropoffAddress: "",
-    ));
+    emit(state.copyWith(dropoffAddress: ""));
   }
 
   // Update Addresses
@@ -229,17 +204,18 @@ class BookRideRealTimeDataBaseCubit extends Cubit<BookRideState> {
     String? dropoffAddressLatitude,
     String? dropoffAddressLongitude,
   }) {
-    emit(state.copyWith(
-      dropoffAddressLatitude: dropoffAddressLatitude,
-      dropoffAddressLongitude: dropoffAddressLongitude,
-    ));
+    emit(
+      state.copyWith(
+        dropoffAddressLatitude: dropoffAddressLatitude,
+        dropoffAddressLongitude: dropoffAddressLongitude,
+      ),
+    );
   }
 
   void removeDropoffLatAndLng() {
-    emit(state.copyWith(
-      dropoffAddressLatitude: "",
-      dropoffAddressLongitude: "",
-    ));
+    emit(
+      state.copyWith(dropoffAddressLatitude: "", dropoffAddressLongitude: ""),
+    );
   }
 
   // Update User Details
@@ -248,11 +224,13 @@ class BookRideRealTimeDataBaseCubit extends Cubit<BookRideState> {
     String? userPhoneNumber,
     int? userId,
   }) {
-    emit(state.copyWith(
-      userId: userId,
-      userName: userName,
-      userPhoneNumber: userPhoneNumber,
-    ));
+    emit(
+      state.copyWith(
+        userId: userId,
+        userName: userName,
+        userPhoneNumber: userPhoneNumber,
+      ),
+    );
   }
 
   void resetState() {
@@ -274,8 +252,13 @@ class BookRideUserSuccess extends BookRideUserState {
   final String? rideId;
   final String? paymentUrl;
 
-  BookRideUserSuccess(
-      {this.pikupOtp, this.bookingId, this.rideId, this.paymentUrl,this.dropOtp});
+  BookRideUserSuccess({
+    this.pikupOtp,
+    this.bookingId,
+    this.rideId,
+    this.paymentUrl,
+    this.dropOtp,
+  });
   @override
   List<Object?> get props => [pikupOtp, bookingId, rideId, paymentUrl];
 }
@@ -291,58 +274,72 @@ class BookRideUserCubit extends Cubit<BookRideUserState> {
   final VehicleRepository vehicleRepository;
   BookRideUserCubit(this.vehicleRepository) : super(BookRideInitial());
 
-   Future<void> bookRide(
-      {required String rideId,
-      required int itemTypeId,
-      required String driverId,
-      required String serviceTypeId,
-      required String totalFare,
-      required BuildContext context,
-      required String estimatedDistance,
-      required String itemId,
-      required String pickupAddress,
-      required String dropOffAddress,
-      required String date,
-      required String pickupLat,
-      required String pickupLng,
-      required String paymentMethod,
-      required String dropOffLat,
-      required String dropOffLng}) async {
+  Future<void> bookRide({
+    required String rideId,
+    required int itemTypeId,
+    required String driverId,
+    required String serviceTypeId,
+    required String totalFare,
+    required BuildContext context,
+    required String estimatedDistance,
+    required String itemId,
+    required String pickupAddress,
+    required String dropOffAddress,
+    required String date,
+    required String pickupLat,
+    required String pickupLng,
+    required String paymentMethod,
+    required String dropOffLat,
+    required String dropOffLng,
+  }) async {
     try {
       final response = await vehicleRepository.bookRide(
-          context: context,
-          itemId: itemId,
-          rideId: rideId,
-          serviceTypeId: serviceTypeId,
-          itemTypeId: itemTypeId,
-          driverId: driverId,
-          totalFare: totalFare,
-          estimatedDistance: estimatedDistance,
-          pickupAddress: pickupAddress,
-          dropOffAddress: dropOffAddress,
-          date: date,
-          pickupLat: pickupLat,
-          pickupLng: pickupLng,
-          paymentMethod: paymentMethod,
-          dropOffLat: dropOffLat,
-          dropOffLng: dropOffLng);
+        context: context,
+        itemId: itemId,
+        rideId: rideId,
+        serviceTypeId: serviceTypeId,
+        itemTypeId: itemTypeId,
+        driverId: driverId,
+        totalFare: totalFare,
+        estimatedDistance: estimatedDistance,
+        pickupAddress: pickupAddress,
+        dropOffAddress: dropOffAddress,
+        date: date,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        paymentMethod: paymentMethod,
+        dropOffLat: dropOffLat,
+        dropOffLng: dropOffLng,
+      );
 
       if (response["status"] == 200) {
-        BookingSucessModel bookingSucessModel =
-            BookingSucessModel.fromJson(response);
-        emit(BookRideUserSuccess(
-            pikupOtp: bookingSucessModel.data!.pickupOtp ?? "",
-            bookingId: response["data"]["booking_id"],
-            paymentUrl: response["data"]["payment_url"],
-            dropOtp:response["data"]["drop_otp"]??"" ,
-            rideId: rideId));
+        BookingSucessModel bookingSucessModel = BookingSucessModel.fromJson(
+          response,
+        );
+        final data = response["data"] is Map ? response["data"] as Map : {};
+        final pickupOtp =
+            (bookingSucessModel.data?.pickupOtp ??
+                    data["pickup_otp"]?.toString() ??
+                    "")
+                .toString();
+        final dropOtp = (data["drop_otp"]?.toString() ?? "").toString();
+        debugPrint(
+          "[RideBookingDebug] booking success | bookingId=${data["booking_id"]} | rideId=$rideId | pickupOtpLength=${pickupOtp.length} | dropOtpLength=${dropOtp.length}",
+        );
+        emit(
+          BookRideUserSuccess(
+            pikupOtp: pickupOtp,
+            bookingId: data["booking_id"],
+            paymentUrl: data["payment_url"]?.toString(),
+            dropOtp: dropOtp,
+            rideId: rideId,
+          ),
+        );
       } else {
         emit(BookRideUserFailure(error: response["error"]));
-
       }
     } catch (error) {
       emit(BookRideUserFailure(error: "error$error"));
-
     }
   }
 
@@ -371,21 +368,25 @@ class UpdateRideStatusInDatabaseCubit
     extends Cubit<UpdateRideStatusInDatabaseState> {
   VehicleRepository realtimeRepository;
   UpdateRideStatusInDatabaseCubit(this.realtimeRepository)
-      : super(RideStatusInitial());
+    : super(RideStatusInitial());
 
-  Future<void> updateRideStatus(
-      {required BuildContext context,
-      required String bookingId,
-      required String rideStatus}) async {
+  Future<void> updateRideStatus({
+    required BuildContext context,
+    required String bookingId,
+    required String rideStatus,
+  }) async {
     try {
       var response = await realtimeRepository.updateRideStatus(
-          context: context, bookingId: bookingId, rideStatus: rideStatus);
+        context: context,
+        bookingId: bookingId,
+        rideStatus: rideStatus,
+      );
 
       if (response["status"] == 200) {
         emit(RideStatusSuceessUpdated(status: "com"));
       }
     } catch (err) {
-   //
+      //
     }
   }
 
@@ -393,5 +394,3 @@ class UpdateRideStatusInDatabaseCubit
     emit(RideStatusInitial());
   }
 }
-
-
